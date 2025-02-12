@@ -1,0 +1,46 @@
+query {
+  metaobjectDefinitions(first: 250) {
+    nodes {
+        id
+        description
+        name
+        type
+        fieldDefinitions {
+            key
+            description
+            required
+            type { name }
+            validations {
+                name
+                value
+            }
+        }
+        # metaobjects(first: 1) {
+        #     nodes {
+        #         id
+        #         displayName
+        #         fields {
+        #             key
+        #             value
+        #             type
+        #         }
+        #     }
+        # }
+    }
+  }
+  productFields: metafieldDefinitions(first: 250, ownerType: PRODUCT) {
+    nodes {
+        id
+        key
+        description
+        type {
+            name
+        }
+        validations {
+            name
+            value
+        }
+        ownerType
+    }
+  }
+}
