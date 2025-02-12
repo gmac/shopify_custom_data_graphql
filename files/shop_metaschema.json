@@ -340,7 +340,16 @@
                               "name": "single_line_text_field"
                           },
                           "validations": []
-                      }
+                      },
+                      {
+                        "key": "volume",
+                        "description": null,
+                        "required": false,
+                        "type": {
+                            "name": "volume"
+                        },
+                        "validations": []
+                    }
                   ],
                   "metaobjects": {
                       "nodes": [
