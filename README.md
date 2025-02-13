@@ -120,27 +120,27 @@ query GetProduct($id: ID!) {
 Lastly, we need to transform the native query response to match the projected request shape. This is handled by the [`ResponseTransfomer`](./lib/response_transformer.rb), which must run on each response. This light in-memory pass on the native response data is the _only_ overhead added to repeated requests. The transformed results match the original projected request shape:
 
 ```json
-{"product"=>
-  {"id"=>"gid://shopify/Product/6885875646486",
-   "title"=>"Neptune Discovery Lab",
-   "extensions"=>
-    {"flexRating"=>1.5,
-     "similarProduct"=>
-      {"id"=>"gid://shopify/Product/6561850556438",
-       "title"=>"Aquanauts Crystal Explorer Sub"},
-     "myTaco"=>
-      {"name"=>"Al Pastor",
-       "rating"=>{"min"=>0.0, "value"=>1.0, "__typename"=>"RatingMetatype"},
-       "protein"=>
-        {"name"=>"Pineapple",
-         "volume"=>
-          {"value"=>2.0,
-           "unit"=>"MILLILITERS",
-           "__typename"=>"VolumeMetatype"}},
-       "toppings"=>
-        {"nodes"=>
-          [{"name"=>"Pineapple",
-            "volume"=>{"value"=>2.0, "unit"=>"MILLILITERS"}}]}}}}}
+{"product":
+  {"id":"gid://shopify/Product/6885875646486",
+   "title":"Neptune Discovery Lab",
+   "extensions":
+    {"flexRating":1.5,
+     "similarProduct":
+      {"id":"gid://shopify/Product/6561850556438",
+       "title":"Aquanauts Crystal Explorer Sub"},
+     "myTaco":
+      {"name":"Al Pastor",
+       "rating":{"min":0.0, "value":1.0, "__typename":"RatingMetatype"},
+       "protein":
+        {"name":"Pineapple",
+         "volume":
+          {"value":2.0,
+           "unit":"MILLILITERS",
+           "__typename":"VolumeMetatype"}},
+       "toppings":
+        {"nodes":
+          [{"name":"Pineapple",
+            "volume":{"value":2.0, "unit":"MILLILITERS"}}]}}}}}
 ```
 
 ## Current support
