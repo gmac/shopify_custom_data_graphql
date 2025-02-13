@@ -6,12 +6,15 @@ class ShopSchemaComposer
     argument :type, String, required: true
   end
 
+  attr_reader :schema_types
+
   def initialize(meta_types, admin_schema)
     @meta_types = meta_types
     @admin_schema = admin_schema
 
     introspection_names = @admin_schema.introspection_system.types.keys
     @schema_types = @admin_schema.types.reject! { |k, v| introspection_names.include?(k) }
+
     @metaobject_definitions_by_id = @meta_types.dig("data", "metaobjectDefinitions", "nodes").each_with_object({}) do |obj, memo|
       obj.delete("metaobjects")
       memo[obj["id"]] = obj
@@ -27,19 +30,20 @@ class ShopSchemaComposer
       build_metaobject(metaobject_def)
     end
 
-    types = @schema_types
+    builder = self
     Class.new(GraphQL::Schema) do
       directive(MetafieldDirective)
-      add_type_and_traverse(types.values, root: false)
-      orphan_types(types.values.select { |t| t.respond_to?(:kind) && t.kind.object? })
-      query types["QueryRoot"]
+      add_type_and_traverse(builder.schema_types.values, root: false)
+      orphan_types(builder.schema_types.values.select { |t| t.respond_to?(:kind) && t.kind.object? })
+      query(builder.schema_types["QueryRoot"])
+      mutation(builder.schema_types["MutationRoot"])
       own_orphan_types.clear
     end
   end
 
   def type_for_metafield_definition(field_def)
     metafield_type = field_def.dig("type", "name")
-    list = metafield_type.start_with?("list")
+    list = MetafieldTypeResolver.list?(metafield_type)
     case metafield_type
     when "boolean"
       @schema_types["Boolean"]
@@ -76,7 +80,7 @@ class ShopSchemaComposer
       metaobject_id = field_def["validations"].find { _1["name"] == "metaobject_definition_id" }["value"]
       metaobject_def = @metaobject_definitions_by_id[metaobject_id]
       if metaobject_def
-        metaobject_name = name_for_metaobject(metaobject_def)
+        metaobject_name = MetafieldTypeResolver.metaobject_typename(metaobject_def["type"])
         GraphQL::Schema::LateBoundType.new(list ? "#{metaobject_name}Connection" : metaobject_name)
       else
         raise "invalid metaobject_reference for #{field_def["key"]}"
@@ -125,21 +129,14 @@ class ShopSchemaComposer
     end
   end
 
-  def name_for_metaobject(metaobject_def)
-    name = metaobject_def["type"]
-    name[0] = name[0].upcase
-    name.gsub!(/_\w/) { _1[1].upcase }
-    "#{name}Metaobject"
-  end
-
   def build_native_type_extensions(native_type)
     metafield_definitions = @meta_types.dig("data", "#{native_type.graphql_name.downcase}Fields", "nodes")
     return unless metafield_definitions&.any?
 
     builder = self
-    extensions_type_name = "#{native_type.graphql_name}Extensions"
-    type = @schema_types[extensions_type_name] = Class.new(GraphQL::Schema::Object) do
-      graphql_name(extensions_type_name)
+    extensions_typename = MetafieldTypeResolver.extensions_typename(native_type.graphql_name)
+    type = @schema_types[extensions_typename] = Class.new(GraphQL::Schema::Object) do
+      graphql_name(extensions_typename)
       description("Projected metafield extensions for the #{native_type.graphql_name} type.")
 
       metafield_definitions.each do |metafield_def|
@@ -176,61 +173,61 @@ class ShopSchemaComposer
 
   def build_metaobject(metaobject_def)
     builder = self
-    metaobject_type_name = name_for_metaobject(metaobject_def)
-    metaobject_type = @schema_types[metaobject_type_name] = Class.new(GraphQL::Schema::Object) do
-      graphql_name(metaobject_type_name)
+    metaobject_typename = MetafieldTypeResolver.metaobject_typename(metaobject_def["type"])
+    metaobject_type = @schema_types[metaobject_typename] = Class.new(GraphQL::Schema::Object) do
+      graphql_name(metaobject_typename)
       description(metaobject_def["description"])
+      field(:id, builder.schema_types["ID"], null: false)
 
       metaobject_def["fieldDefinitions"].each do |metafield_def|
         builder.build_object_field(metafield_def, self)
       end
     end
 
-    page_info_type = @schema_types["PageInfo"]
     @schema_types[metaobject_type.edge_type.graphql_name] = metaobject_type.edge_type
     @schema_types["#{metaobject_type.graphql_name}Connection"] = Class.new(GraphQL::Schema::Object) do
       graphql_name("#{metaobject_type.graphql_name}Connection")
       field :edges, metaobject_type.edge_type.to_non_null_type.to_list_type, null: false
       field :nodes, metaobject_type.to_non_null_type.to_list_type, null: false
-      field :page_info, page_info_type, null: false
+      field :page_info, builder.schema_types["PageInfo"], null: false
     end
   end
 
   def build_color_metatype
-    type_name = "ColorMetatype"
-    @schema_types[type_name] ||= Class.new(GraphQL::Schema::Scalar) do
-      graphql_name(type_name)
+    @schema_types[MetafieldTypeResolver::COLOR_TYPENAME] ||= Class.new(GraphQL::Schema::Scalar) do
+      graphql_name(MetafieldTypeResolver::COLOR_TYPENAME)
       description("A hexadecimal color code.")
     end
   end
 
   def build_dimension_metatype
-    type_name = "DimensionMetatype"
-    types = @schema_types
-    @schema_types[type_name] ||= Class.new(GraphQL::Schema::Object) do
-      graphql_name(type_name)
+    builder = self
+    @schema_types[MetafieldTypeResolver::DIMENSION_TYPENAME] ||= Class.new(GraphQL::Schema::Object) do
+      graphql_name(MetafieldTypeResolver::DIMENSION_TYPENAME)
       description("A dimensional measurement.")
-      field :value, types["Float"]
-      field :unit, types["String"]
+      field :unit, builder.schema_types["String"]
+      field :value, builder.schema_types["Float"]
     end
   end
 
   def build_rating_metatype
-    type_name = "RatingMetatype"
-    @schema_types[type_name] ||= Class.new(GraphQL::Schema::Scalar) do
-      graphql_name(type_name)
+    builder = self
+    @schema_types[MetafieldTypeResolver::RATING_TYPENAME] ||= Class.new(GraphQL::Schema::Object) do
+      graphql_name(MetafieldTypeResolver::RATING_TYPENAME)
       description("A rating value.")
+      field :max, builder.schema_types["Float"]
+      field :min, builder.schema_types["Float"]
+      field :value, builder.schema_types["Float"]
     end
   end
 
   def build_volume_metatype
-    type_name = "VolumeMetatype"
-    types = @schema_types
-    @schema_types[type_name] ||= Class.new(GraphQL::Schema::Object) do
-      graphql_name(type_name)
+    builder = self
+    @schema_types[MetafieldTypeResolver::VOLUME_TYPENAME] ||= Class.new(GraphQL::Schema::Object) do
+      graphql_name(MetafieldTypeResolver::VOLUME_TYPENAME)
       description("A volumetric measurement.")
-      field :value, types["Float"]
-      field :unit, types["String"]
+      field :unit, builder.schema_types["String"]
+      field :value, builder.schema_types["Float"]
     end
   end
 end
