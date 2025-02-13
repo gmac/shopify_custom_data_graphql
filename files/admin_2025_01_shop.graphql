@@ -12,6 +12,8 @@ directive @accessRestricted(
   reason: String = null
 ) on FIELD_DEFINITION | OBJECT
 
+directive @metafield(key: String!, type: String!) on FIELD_DEFINITION
+
 """
 Requires that exactly one field must be supplied and that field must not be `null`.
 """
@@ -43191,32 +43193,32 @@ type ProductExtensions {
   """
   
   """
-  collectionType: String
+  collectionType: String @metafield(key: "collection_type", type: "single_line_text_field")
 
   """
   
   """
-  flexRating: Float
+  flexRating: Float @metafield(key: "flex_rating", type: "number_decimal")
 
   """
   
   """
-  similarProduct: Product
+  similarProduct: Product @metafield(key: "similar_product", type: "product_reference")
 
   """
   The internal SKU associated with this product.
   """
-  sku: String
+  sku: String @metafield(key: "sku", type: "single_line_text_field")
 
   """
   Great related taco
   """
-  tacoPairing: TacoMetaobject
+  tacoPairing: TacoMetaobject @metafield(key: "taco_pairing", type: "metaobject_reference")
 
   """
   
   """
-  thing: Date
+  thing: Date @metafield(key: "thing", type: "date")
 }
 
 """
@@ -64947,7 +64949,8 @@ type SuggestedReturnRefund {
 }
 
 type TacoFillingMetaobject {
-  name: String
+  name: String @metafield(key: "name", type: "single_line_text_field")
+  volume: VolumeMetatype @metafield(key: "volume", type: "volume")
 }
 
 type TacoFillingMetaobjectConnection {
@@ -64978,22 +64981,22 @@ type TacoMetaobject {
   """
   
   """
-  name: String
+  name: String @metafield(key: "name", type: "single_line_text_field")
 
   """
   
   """
-  protein: TacoFillingMetaobject
+  protein: TacoFillingMetaobject @metafield(key: "protein", type: "metaobject_reference")
 
   """
   
   """
-  rating: RatingMetatype
+  rating: RatingMetatype @metafield(key: "rating", type: "rating")
 
   """
   
   """
-  toppings(after: String, before: String, first: Int, last: Int): TacoFillingMetaobjectConnection
+  toppings(after: String, before: String, first: Int, last: Int): TacoFillingMetaobjectConnection @metafield(key: "toppings", type: "list.metaobject_reference")
 }
 
 """
@@ -67258,6 +67261,14 @@ type VideoSource {
   The video source's width.
   """
   width: Int!
+}
+
+"""
+A volumetric measurement.
+"""
+type VolumeMetatype {
+  unit: String
+  value: Float
 }
 
 """
