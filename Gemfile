@@ -2,6 +2,6 @@
 
 source 'https://rubygems.org'
 
-gem 'graphql'
+gemspec
 gem 'pry'
 gem 'pry-byebug'
