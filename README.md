@@ -16,7 +16,7 @@ type Product {
 }
 
 type ProductExtensions {
-  tacoPairing: TacoMetaobject
+  tacoPairing: TacoMetaobject @metafield(key: "taco_pairing", type: "metaobject_reference")
 }
 
 type TacoMetaobject {
