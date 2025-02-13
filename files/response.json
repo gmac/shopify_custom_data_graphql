@@ -1,65 +1,62 @@
 {
-  "data": {
-      "product": {
-          "id": "gid://shopify/Product/6885875646486",
-          "title": "Neptune Discovery Lab",
-          "__extensions__flexRating": {
-              "value": "1.5"
-          },
-          "__extensions__similarProduct": {
-              "reference": {
-                  "id": "gid://shopify/Product/6561850556438",
-                  "title": "Aquanauts Crystal Explorer Sub"
-              }
-          },
-          "__extensions__myTaco": {
-              "reference": {
-                  "name": {
-                      "value": "Al Pastor"
-                  },
-                  "rating": {
-                      "value": "{\"scale_min\":\"0.0\",\"scale_max\":\"1.0\",\"value\":\"1.0\"}"
-                  },
-                  "protein": {
-                      "reference": {
-                          "name": {
-                              "value": "sfoo"
-                          }
-                      }
-                  },
-                  "toppings": {
-                      "references": {
-                          "edges": [
-                              {
-                                  "node": {
-                                      "name": {
-                                          "value": "sfoo"
-                                      }
-                                  }
-                              }
-                          ],
-                          "nodes": [
-                              {
-                                  "name": {
-                                      "value": "sfoo"
-                                  }
-                              }
-                          ]
-                      }
-                  }
-              }
-          }
-      }
-  },
-  "extensions": {
-      "cost": {
-          "requestedQueryCost": 30,
-          "actualQueryCost": 18,
-          "throttleStatus": {
-              "maximumAvailable": 2000.0,
-              "currentlyAvailable": 1982,
-              "restoreRate": 100.0
-          }
-      }
-  }
+    "data": {
+        "product": {
+            "id": "gid://shopify/Product/6885875646486",
+            "title": "Neptune Discovery Lab",
+            "__extensions__flexRating": {
+                "value": "1.5"
+            },
+            "__extensions__similarProduct": {
+                "reference": {
+                    "id": "gid://shopify/Product/6561850556438",
+                    "title": "Aquanauts Crystal Explorer Sub"
+                }
+            },
+            "__extensions__myTaco": {
+                "reference": {
+                    "name": {
+                        "value": "Al Pastor"
+                    },
+                    "rating": {
+                        "value": "{\"scale_min\":\"0.0\",\"scale_max\":\"1.0\",\"value\":\"1.0\"}"
+                    },
+                    "protein": {
+                        "reference": {
+                            "name": {
+                                "value": "Pineapple"
+                            },
+                            "volume": {
+                                "value": "{\"value\":2.0,\"unit\":\"MILLILITERS\"}"
+                            }
+                        }
+                    },
+                    "toppings": {
+                        "references": {
+                            "nodes": [
+                                {
+                                    "name": {
+                                        "value": "Pineapple"
+                                    },
+                                    "volume": {
+                                        "value": "{\"value\":2.0,\"unit\":\"MILLILITERS\"}"
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "extensions": {
+        "cost": {
+            "requestedQueryCost": 27,
+            "actualQueryCost": 18,
+            "throttleStatus": {
+                "maximumAvailable": 2000.0,
+                "currentlyAvailable": 1982,
+                "restoreRate": 100.0
+            }
+        }
+    }
 }

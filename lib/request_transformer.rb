@@ -1,14 +1,14 @@
 class RequestTransformer
   GRAPHQL_PRINTER = GraphQL::Language::Printer.new
 
-  def initialize(shop_schema)
+  def initialize(shop_schema, document)
     @schema = shop_schema
     @owner_types = @schema.possible_types(@schema.get_type("HasMetafields")).to_set
+    @document = document.is_a?(String) ? GraphQL.parse(query) : document
   end
 
-  def perform(query)
-    document = GraphQL.parse(query)
-    op = document.definitions.first
+  def perform
+    op = @document.definitions.first
     op = op.merge(selections: transform_selections(@schema.query, op.selections))
     puts GRAPHQL_PRINTER.print(op)
   end
@@ -51,9 +51,12 @@ class RequestTransformer
       case node
       when GraphQL::Language::Nodes::Field
         field = parent_type.get_field(node.name)
-        metafield_attrs = field.directives.find { _1.graphql_name == "metafield" }.arguments.keyword_arguments
-        is_list = metafield_attrs[:type].start_with?("list.")
-        is_reference = metafield_attrs[:type].end_with?("_reference")
+        metafield_attrs = field.directives.find { _1.graphql_name == "metafield" }&.arguments&.keyword_arguments
+        next node unless metafield_attrs
+
+        type_name = metafield_attrs[:type]
+        is_list = MetafieldTypeResolver.list?(type_name)
+        is_reference = MetafieldTypeResolver.reference?(type_name)
         field_alias = "#{metaobject_scope ? "" : "__extensions__"}#{node.alias || node.name}"
         next_type = parent_type.get_field(node.name).type.unwrap
 
@@ -102,7 +105,7 @@ class RequestTransformer
   end
 
   def build_reference(reference_type, input_selections)
-    if reference_type.graphql_name.end_with?("Metaobject")
+    if MetafieldTypeResolver.metaobject_type?(reference_type.graphql_name)
       [
         GraphQL::Language::Nodes::InlineFragment.new(
           type: GraphQL::Language::Nodes::TypeName.new(name: "Metaobject"),
