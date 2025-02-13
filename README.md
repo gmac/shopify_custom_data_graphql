@@ -6,7 +6,7 @@ An experimental client for interfacing with Shopify metafields and metaobjects t
 
 ### 1. Compose schema projection
 
-A schema projection first loads all metafield and metaobject definitions from the Admin API (see [sample query](./files/shop_metaschema.graphql)). Then it loads a base version of the Shopify Admin API (see [base schema](./files/admin_2025_01_public.graphql)), and projects metafields and metaobjects as native fields and types into that schema (see [schema projection](./files/admin_2025_01_shop.graphql#L64985-L65007)). This creates static definitions for custom elements with naming carefully scoped to avoid conflicts with the base Admin schema, for example:
+A schema projection first loads all metafield and metaobject definitions from the Admin API (see [sample query](./files/shop_metaschema.graphql)). Then it loads a base version of the Shopify Admin API, and projects metafields and metaobjects as native fields and types into that schema using the [`ShopSchemaComposer`](./lib/shop_schema_composer.rb). This creates static definitions for custom elements with naming carefully scoped to avoid conflicts with the base Admin schema, for example:
 
 ```graphql
 type Product {
@@ -194,3 +194,5 @@ This is a scrappy prototype. Still needs several major implementation details:
 - Selection fragment handling
 - Consistent `__typename` handling
 - Support for `mixed_reference` metafields
+
+This process is intended to run on a client, so should ultimately be ported to JavaScript. This Ruby prototype riffs off a significant amout of similar code I alredy had written for Ruby GraphQL stitching.
