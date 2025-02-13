@@ -6,7 +6,21 @@ An experimental client for interfacing with Shopify metafields and metaobjects t
 
 ### 1. Compose schema projection
 
-A schema projection first loads all metafield and metaobject definitions from the Admin API (see [sample query](./files/shop_metaschema.graphql)). Then it loads a base version of the Shopify Admin API (see [base schema](./files/admin_2025_01_public.graphql)), and projects metafields and metaobjects as native fields and types into that schema (see [schema projection](./files/admin_2025_01_shop.graphql#L64985-L65007)). Type naming and field scoping is carefully managed to avoid conflicts with the base Admin schema.
+A schema projection first loads all metafield and metaobject definitions from the Admin API (see [sample query](./files/shop_metaschema.graphql)). Then it loads a base version of the Shopify Admin API (see [base schema](./files/admin_2025_01_public.graphql)), and projects metafields and metaobjects as native fields and types into that schema (see [schema projection](./files/admin_2025_01_shop.graphql#L64985-L65007)). That creates static definitions for custom elements, and naming is carefully scoped to avoid conflicts with the base Admin schema, for example:
+
+```graphql
+type TacoMetaobject {
+  id: ID!
+
+  name: String @metafield(key: "name", type: "single_line_text_field")
+
+  protein: TacoFillingMetaobject @metafield(key: "protein", type: "metaobject_reference")
+
+  rating: RatingMetatype @metafield(key: "rating", type: "rating")
+
+  toppings(after: String, before: String, first: Int, last: Int): TacoFillingMetaobjectConnection @metafield(key: "toppings", type: "list.metaobject_reference")
+}
+```
 
 With this done, we now have a Shop schema projection that can compose and validate GraphQL queries structured like this:
 
