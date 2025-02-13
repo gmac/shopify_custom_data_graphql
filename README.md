@@ -9,6 +9,16 @@ An experimental client for interfacing with Shopify metafields and metaobjects t
 A schema projection first loads all metafield and metaobject definitions from the Admin API (see [sample query](./files/shop_metaschema.graphql)). Then it loads a base version of the Shopify Admin API (see [base schema](./files/admin_2025_01_public.graphql)), and projects metafields and metaobjects as native fields and types into that schema (see [schema projection](./files/admin_2025_01_shop.graphql#L64985-L65007)). This creates static definitions for custom elements with naming carefully scoped to avoid conflicts with the base Admin schema, for example:
 
 ```graphql
+type Product {
+  # full native product fields...
+
+  extensions: ProductExtensions!
+}
+
+type ProductExtensions {
+  tacoPairing: TacoMetaobject
+}
+
 type TacoMetaobject {
   id: ID!
 
