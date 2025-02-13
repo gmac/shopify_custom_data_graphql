@@ -51937,7 +51937,11 @@ type QueryRoot {
 """
 A rating value.
 """
-scalar RatingMetatype
+type RatingMetatype {
+  max: Float
+  min: Float
+  value: Float
+}
 
 """
 The record of the line items and transactions that were refunded to a customer,
@@ -64949,6 +64953,7 @@ type SuggestedReturnRefund {
 }
 
 type TacoFillingMetaobject {
+  id: ID!
   name: String @metafield(key: "name", type: "single_line_text_field")
   volume: VolumeMetatype @metafield(key: "volume", type: "volume")
 }
@@ -64978,6 +64983,8 @@ type TacoFillingMetaobjectEdge {
 
 """
 type TacoMetaobject {
+  id: ID!
+
   """
   
   """
