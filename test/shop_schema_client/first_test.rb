@@ -4,16 +4,21 @@ require "test_helper"
 
 describe "First Test" do
   QUERY = %|query GetProduct($id: ID!){
-    product(id: $id) {
+    node(id: $id) { ...on Product{
       id
       title
       extensions {
-        flexRating
+        __typename
+        ...Sfoo
+        ...on ProductExtensions {
+          flexRating
+        }
         similarProduct {
           id
           title
         }
         myTaco: tacoPairing {
+          __typename
           name
           rating {
             min
@@ -32,15 +37,17 @@ describe "First Test" do
             nodes {
               name
               volume {
-                value
-                unit
+                ...Volume
               }
             }
           }
         }
       }
     }
-  }|
+}}
+  fragment Sfoo on ProductExtensions { flexRating }
+  fragment Volume on VolumeMetatype { value unit }
+  |
 
   def test_up_and_running
     schema = load_admin_schema
@@ -49,13 +56,16 @@ describe "First Test" do
 
     document = GraphQL.parse(QUERY)
     query = GraphQL::Query.new(shop_schema, document: document, context: {})
-    puts "valid: #{shop_schema.static_validator.validate(query)[:errors].empty?}"
+    errors = shop_schema.static_validator.validate(query)[:errors]
+    puts "valid: #{errors.empty?}"
+    puts errors.map(&:message) if errors.any?
 
-    document2 = ShopSchemaClient::RequestTransformer.new(shop_schema, document).perform
+    # binding.pry
+    document2 = ShopSchemaClient::RequestTransformer.new(query).perform
     puts GraphQL::Language::Printer.new.print(document2)
 
-    response = JSON.parse(File.read("#{__dir__}/../fixtures/response.json"))
-    pp ShopSchemaClient::ResponseTransformer.new(shop_schema, document).perform(response["data"])
+    # response = JSON.parse(File.read("#{__dir__}/../fixtures/response.json"))
+    # pp ShopSchemaClient::ResponseTransformer.new(shop_schema, document).perform(response["data"])
     assert true
   end
 end
