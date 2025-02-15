@@ -93,10 +93,10 @@ module ShopSchemaClient
     def scope_extensions!(raw_object)
       extensions_scope = nil
       raw_object.reject! do |key, value|
-        next false unless key.start_with?("__extensions__")
+        next false unless key.start_with?(RequestTransformer::EXTENSIONS_PREFIX)
 
         extensions_scope ||= {}
-        extensions_scope[key.sub("__extensions__", "")] = value
+        extensions_scope[key.sub(RequestTransformer::EXTENSIONS_PREFIX, "")] = value
         true
       end
 
