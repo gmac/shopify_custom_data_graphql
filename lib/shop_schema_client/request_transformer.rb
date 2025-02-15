@@ -1,11 +1,20 @@
 # frozen_string_literal: true
 
+require_relative "request_transformer/transformation_map"
+
 module ShopSchemaClient
   class RequestTransformer
-    def initialize(query)
+    EXTENSIONS_PREFIX = "__ex_"
+    EXTENSIONS_SCOPE = :extensions
+    METAOBJECT_SCOPE = :metaobject
+    NATIVE_SCOPE = :native
+
+    def initialize(query, metafield_ns = "custom")
       @query = query
       @schema = query.schema
+      @transform_map = TransformationMap.new
       @owner_types = @schema.possible_types(@schema.get_type("HasMetafields")).to_set
+      @metafield_ns = metafield_ns
       @new_fragments = {}
     end
 
@@ -13,36 +22,47 @@ module ShopSchemaClient
       op = @query.selected_operation
       parent_type = @query.root_type_for_operation(op.operation_type)
       op = op.merge(selections: transform_scope(parent_type, op.selections))
+      # pp @transform_map.as_json
       GraphQL::Language::Nodes::Document.new(definitions: [op, *@new_fragments.values])
     end
 
     private
 
-    def transform_scope(parent_type, input_selections, scope_type: :native)
-      new_selections = input_selections.flat_map do |node|
+    def transform_scope(parent_type, input_selections, scope_type: NATIVE_SCOPE)
+      input_selections.flat_map do |node|
         case node
         when GraphQL::Language::Nodes::Field
-          if scope_type == :extensions || scope_type == :metaobject
-            build_metafield(parent_type, node, scope_type: scope_type)
-          elsif scope_type == :native && node.name == "extensions" && @owner_types.include?(parent_type)
-            next_type = parent_type.get_field(node.name).type.unwrap
-            transform_scope(next_type, node.selections, scope_type: :extensions)
-          elsif node.selections&.any?
-            next_type = parent_type.get_field(node.name).type.unwrap
-            node.merge(selections: transform_scope(next_type, node.selections))
-          else
-            node
+          @transform_map.step(node.name) do
+            if scope_type == EXTENSIONS_SCOPE || scope_type == METAOBJECT_SCOPE
+              build_metafield(parent_type, node, scope_type: scope_type)
+            elsif scope_type == NATIVE_SCOPE && node.name == "extensions" && @owner_types.include?(parent_type)
+              next_type = parent_type.get_field(node.name).type.unwrap
+              @transform_map.current_scope.parent.actions << TransformAction.new("ex",
+                typename: parent_type.graphql_name,
+              )
+              sel = transform_scope(next_type, node.selections, scope_type: EXTENSIONS_SCOPE)
+              sel << GraphQL::Language::Nodes::Field.new(
+                field_alias: "__typehint",
+                name: "__typename",
+              )
+              sel
+            elsif node.selections&.any?
+              next_type = parent_type.get_field(node.name).type.unwrap
+              node.merge(selections: transform_scope(next_type, node.selections))
+            else
+              node
+            end
           end
 
         when GraphQL::Language::Nodes::InlineFragment
           fragment_type = node.type.nil? ? parent_type : @schema.get_type(node.type.name)
 
           if MetafieldTypeResolver.extensions_type?(fragment_type.graphql_name)
-            transform_scope(fragment_type, node.selections, scope_type: :extensions)
+            transform_scope(fragment_type, node.selections, scope_type: EXTENSIONS_SCOPE)
           elsif MetafieldTypeResolver.metaobject_type?(fragment_type.graphql_name)
             GraphQL::Language::Nodes::InlineFragment.new(
               type: GraphQL::Language::Nodes::TypeName.new(name: "Metaobject"),
-              selections: transform_scope(fragment_type, node.selections, scope_type: :metaobject),
+              selections: transform_scope(fragment_type, node.selections, scope_type: METAOBJECT_SCOPE),
             )
           else
             GraphQL::Language::Nodes::InlineFragment.new(
@@ -59,10 +79,10 @@ module ShopSchemaClient
 
             fragment_selections = if MetafieldTypeResolver.extensions_type?(fragment_type.graphql_name)
               fragment_type_name = fragment_type_name.sub(MetafieldTypeResolver::EXTENSIONS_TYPE_SUFFIX, "")
-              transform_scope(fragment_type, fragment_def.selections, scope_type: :extensions)
+              transform_scope(fragment_type, fragment_def.selections, scope_type: EXTENSIONS_SCOPE)
             elsif MetafieldTypeResolver.metaobject_type?(fragment_type.graphql_name)
               fragment_type_name = "Metaobject"
-              transform_scope(fragment_type, fragment_def.selections, scope_type: :metaobject)
+              transform_scope(fragment_type, fragment_def.selections, scope_type: METAOBJECT_SCOPE)
             else
               transform_scope(fragment_type, fragment_def.selections)
             end
@@ -76,23 +96,27 @@ module ShopSchemaClient
           node
         end
       end
-
-      if parent_type.kind.abstract?
-        new_selections << GraphQL::Language::Nodes::Field.new(
-          field_alias: "__exp__typename",
-          name: "__typename",
-        )
-      end
-
-      new_selections
     end
 
     def build_metafield(parent_type, node, scope_type:)
       if node.name == "__typename"
-        return GraphQL::Language::Nodes::Field.new(
-          field_alias: "__#{ scope_type.to_s[0] }name_#{node.alias || node.name}",
-          name: scope_type == :metaobject ? "type" : "__typename",
-        )
+        field_name = node.alias || node.name
+        case scope_type
+        when EXTENSIONS_SCOPE
+          @transform_map.add_action(TransformAction.new("ex_typename"))
+          return GraphQL::Language::Nodes::Field.new(
+            field_alias: "#{EXTENSIONS_PREFIX}#{field_name}",
+            name: "__typename",
+          )
+        when METAOBJECT_SCOPE
+          @transform_map.add_action(TransformAction.new("mo_typename"))
+          return GraphQL::Language::Nodes::Field.new(
+            field_alias: field_name,
+            name: "type",
+          )
+        else
+          return node
+        end
       end
 
       field = parent_type.get_field(node.name)
@@ -102,10 +126,11 @@ module ShopSchemaClient
       type_name = metafield_attrs[:type]
       is_list = MetafieldTypeResolver.list?(type_name)
       is_reference = MetafieldTypeResolver.reference?(type_name)
-      field_alias = "#{scope_type == :extensions ? "__ext_" : ""}#{node.alias || node.name}"
+      field_alias = "#{scope_type == EXTENSIONS_SCOPE ? EXTENSIONS_PREFIX : ""}#{node.alias || node.name}"
       next_type = parent_type.get_field(node.name).type.unwrap
 
-      selections = if is_reference && is_list
+      selection = if is_reference && is_list
+        @transform_map.add_action(TransformAction.new("mf_references"))
         conn_node_type = next_type.get_field("nodes").type.unwrap
         conn_selections = node.selections.map do |conn_node|
           case conn_node.name
@@ -121,29 +146,35 @@ module ShopSchemaClient
           end
         end
 
-        [
-          GraphQL::Language::Nodes::Field.new(
-            name: "references",
-            arguments: node.arguments,
-            selections: conn_selections,
-          )
-        ]
+        GraphQL::Language::Nodes::Field.new(
+          name: "references",
+          arguments: node.arguments,
+          selections: conn_selections,
+        )
       elsif is_reference
-        [
-          GraphQL::Language::Nodes::Field.new(
-            name: "reference",
-            selections: build_metafield_reference(next_type, node.selections),
-          )
-        ]
+        @transform_map.add_action(TransformAction.new("mf_reference"))
+        GraphQL::Language::Nodes::Field.new(
+          name: "reference",
+          selections: build_metafield_reference(next_type, node.selections),
+        )
       else
-        [GraphQL::Language::Nodes::Field.new(name: "value")]
+        @transform_map.add_action(
+          TransformAction.new(
+            "mf_value",
+            metafield_type: type_name,
+            selections: extract_value_selections(node.selections).presence,
+          )
+        )
+        GraphQL::Language::Nodes::Field.new(name: "value")
       end
 
+      metafield_key = metafield_attrs[:key]
+      metafield_key = "#{@metafield_ns}.#{metafield_key}" if scope_type == EXTENSIONS_SCOPE
       GraphQL::Language::Nodes::Field.new(
         field_alias: field_alias,
-        name: scope_type == :metaobject ? "field" : "metafield",
-        arguments: [GraphQL::Language::Nodes::Argument.new(name: "key", value: metafield_attrs[:key])],
-        selections: selections,
+        name: scope_type == EXTENSIONS_SCOPE ? "metafield" : "field",
+        arguments: [GraphQL::Language::Nodes::Argument.new(name: "key", value: metafield_key)],
+        selections: [selection],
       )
     end
 
@@ -152,7 +183,7 @@ module ShopSchemaClient
         [
           GraphQL::Language::Nodes::InlineFragment.new(
             type: GraphQL::Language::Nodes::TypeName.new(name: "Metaobject"),
-            selections: transform_scope(reference_type, input_selections, scope_type: :metaobject),
+            selections: transform_scope(reference_type, input_selections, scope_type: METAOBJECT_SCOPE),
           )
         ]
       else
@@ -163,6 +194,22 @@ module ShopSchemaClient
           )
         ]
       end
+    end
+
+    # value types (Money, Volume, Dimension) are always concrete,
+    # so we can safely traverse fragment selections without type awareness.
+    def extract_value_selections(selections, acc = [])
+      selections.each do |node|
+        case node
+        when GraphQL::Language::Nodes::Field
+          acc << [node.alias, node.name].tap(&:compact!).join(":")
+        when GraphQL::Language::Nodes::InlineFragment
+          extract_value_selections(node.selections, acc)
+        when GraphQL::Language::Nodes::FragmentSpread
+          extract_value_selections(@query.fragments[node.name].selections, acc)
+        end
+      end
+      acc
     end
   end
 end

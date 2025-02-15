@@ -64,8 +64,8 @@ describe "First Test" do
     document2 = ShopSchemaClient::RequestTransformer.new(query).perform
     puts GraphQL::Language::Printer.new.print(document2)
 
-    # response = JSON.parse(File.read("#{__dir__}/../fixtures/response.json"))
-    # pp ShopSchemaClient::ResponseTransformer.new(shop_schema, document).perform(response["data"])
+    response = JSON.parse(File.read("#{__dir__}/../fixtures/response.json"))
+    pp ShopSchemaClient::ResponseTransformer.new(shop_schema, document).perform(response["data"])
     assert true
   end
 end
