@@ -2,17 +2,15 @@
 
 module ShopSchemaClient
   class RequestTransformer
-    class TransformAction
+    class FieldTransform
       def initialize(
         action,
         metafield_type: nil,
-        selections: nil,
-        typename: nil
+        selections: nil
       )
         @action = action
         @metafield_type = metafield_type
         @selections = selections
-        @typename = typename
       end
 
       def as_json
@@ -20,30 +18,39 @@ module ShopSchemaClient
           "do" => @action,
           "t" => @metafield_type,
           "s" => @selections,
-          "if" => @typename,
         }.tap(&:compact!)
       end
     end
 
     class TransformationScope
-      attr_reader :parent, :children, :actions, :namespace
+      attr_reader :parent, :fields
+      attr_reader :field_transforms, :possible_types
+      attr_accessor :has_extensions
 
-      def initialize(parent = nil, namespace = nil)
+      def initialize(parent = nil)
         @parent = parent
-        @namespace = namespace
-        @children = {}
-        @actions = []
+        @possible_types = {}
+        @fields = {}
+        @field_transforms = []
+        @has_extensions = false
       end
 
       def as_json
-        paths = @children.each_with_object({}) do |(k, v), m|
+        fields = @fields.each_with_object({}) do |(k, v), m|
+          info = v.as_json
+          m[k] = info unless info.empty?
+        end
+
+        possible_types = @possible_types.each_with_object({}) do |(k, v), m|
           info = v.as_json
           m[k] = info unless info.empty?
         end
 
         {
-          "f" => paths.empty? ? nil : paths,
-          "do" => actions.empty? ? nil : actions.map(&:as_json).tap(&:uniq!),
+          "f" => fields.empty? ? nil : fields,
+          "fx" => field_transforms.empty? ? nil : field_transforms.map(&:as_json).tap(&:uniq!),
+          "ex" => @has_extensions ? true : nil,
+          "if" => possible_types.empty? ? nil : possible_types,
         }.tap(&:compact!)
       end
     end
@@ -55,28 +62,33 @@ module ShopSchemaClient
         @current_scope = TransformationScope.new
       end
 
-      def forward(ns)
-        @current_scope = @current_scope.children[ns] ||= TransformationScope.new(@current_scope, ns)
+      def as_json
+        @current_scope.as_json
       end
 
-      def back
-        raise "TransformationMap cannot go back" if @current_scope.parent.nil?
-        @current_scope = @current_scope.parent
+      def add_field_transform(transform)
+        @current_scope.field_transforms << transform
       end
 
-      def step(namespace)
-        forward(namespace)
+      def field_breadcrumb(ns)
+        @current_scope = @current_scope.fields[ns] ||= TransformationScope.new(@current_scope)
         result = yield
         back
         result
       end
 
-      def add_action(action)
-        @current_scope.actions << action
+      def type_breadcrumb(types)
+        @current_scope = @current_scope.possible_types[types] ||= TransformationScope.new(@current_scope)
+        result = yield
+        back
+        result
       end
 
-      def as_json
-        @current_scope.as_json
+      private
+
+      def back
+        raise "TransformationMap cannot go back" if @current_scope.parent.nil?
+        @current_scope = @current_scope.parent
       end
     end
   end

@@ -1,12 +1,12 @@
 # shop-schema-client
 
-An experimental client for interfacing with Shopify metafields and metaobjects through a statically-typed schema projection.
+An experimental client for interfacing with Shopify metafields and metaobjects through a statically-typed schema projection. Try out a working shop schema server in the [example](./example/README.md) folder.
 
 ## How it works
 
 ### 1. Compose schema projection
 
-A schema projection first loads all metafield and metaobject definitions from the Admin API (see [sample query](./files/shop_metaschema.graphql)). Then it loads a base version of the Shopify Admin API, and projects metafields and metaobjects as native fields and types into that schema using the [`ShopSchemaComposer`](./lib/shop_schema_composer.rb). This creates static definitions for custom elements with naming carefully scoped to avoid conflicts with the base Admin schema, for example:
+A schema projection first loads all metafield and metaobject definitions from the Admin API (see [sample query](./example/server.rb)). Then it loads a base version of the Shopify Admin API, and inserts metafields and metaobjects as native fields and types into that schema using the [`ShopSchemaComposer`](./lib/shop_schema_composer.rb). This creates static definitions for custom elements with naming carefully scoped to avoid conflicts with the base Admin schema, for example:
 
 ```graphql
 type Product {
@@ -32,7 +32,7 @@ type TacoMetaobject {
 }
 ```
 
-With this done, we now have a Shop schema projection that can compose and validate GraphQL queries structured like this:
+Now we now have a Shop schema projection that can inform and validate GraphQL queries structured like this:
 
 ```graphql
 query GetProduct($id: ID!){
@@ -79,7 +79,7 @@ query GetProduct($id: ID!){
 
 ### 2. Transform requests
 
-In order to actually send the above query to the Shopify Admin API, we need to transform it into a native query structure. The [`RequestTransfomer`](./lib/request_transformer.rb) automates this, and the transformed query can be processed once and used repeatedly with no subsequent request overhead:
+In order to send the above query to the Shopify Admin API, we need to transform it into a native query structure. The [`RequestTransfomer`](./lib/request_transformer.rb) automates this. The transformed query can be computed once during development, cached, and used repeatedly in production with no request overhead:
 
 ```graphql
 query GetProduct($id: ID!) {
@@ -141,7 +141,7 @@ query GetProduct($id: ID!) {
 
 ### 3. Transform responses
 
-Lastly, we need to transform the native query response to match the projected request shape. This is handled by the [`ResponseTransfomer`](./lib/response_transformer.rb), which must run on each response. This light in-memory pass on the native response data is the _only_ overhead added to repeated requests. The transformed results match the original projected request shape:
+Lastly, we need to transform the native query response to match the projected request shape. This is handled by the [`ResponseTransfomer`](./lib/response_transformer.rb), which must run on all responses. It performs a quick in-memory pass making structural changes based on a mapping provided by the request transformer. The transformed results match the original projected request shape:
 
 ```json
 {
@@ -188,11 +188,9 @@ Lastly, we need to transform the native query response to match the projected re
 
 ## Current support
 
-This is a scrappy prototype. Still needs several major implementation details:
+While mostly feature complete, this is still an early prototype. Needs:
 
-- Abstract type handling
-- Selection fragment handling
-- Consistent `__typename` handling
+- Tests
 - Support for `mixed_reference` metafields
 
 This process is intended to run on a client, so should ultimately be ported to JavaScript. This Ruby prototype riffs off a significant amout of similar code I alredy had written for Ruby GraphQL stitching.

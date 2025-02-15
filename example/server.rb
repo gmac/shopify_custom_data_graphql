@@ -28,19 +28,26 @@ SCHEMA_QUERY = %|
         }
       }
     }
-    productFields: metafieldDefinitions(first: 250, ownerType: PRODUCT) {
-      nodes {
-        id
-        key
-        description
-        type { name }
-        validations {
-          name
-          value
-        }
-        ownerType
-      }
+    product_metafields: metafieldDefinitions(first: 250, ownerType: PRODUCT) {
+      nodes { ...MetafieldAttrs }
     }
+    # product_variant_metafields: metafieldDefinitions(first: 250, ownerType: PRODUCTVARIANT) {
+    #   nodes { ...MetafieldAttrs }
+    # }
+    collection_metafields: metafieldDefinitions(first: 250, ownerType: COLLECTION) {
+      nodes { ...MetafieldAttrs }
+    }
+  }
+  fragment MetafieldAttrs on MetafieldDefinition {
+    id
+    key
+    description
+    type { name }
+    validations {
+      name
+      value
+    }
+    ownerType
   }
 |
 
@@ -105,8 +112,13 @@ class App
       ShopSchemaClient::ShopSchemaComposer::MetaobjectDefinition.from_graphql(metaobject_def)
     end
 
-    metafields = result.dig("data", "productFields", "nodes").map do |metafield_def|
-      ShopSchemaClient::ShopSchemaComposer::MetafieldDefinition.from_graphql(metafield_def)
+    metafields = []
+    result["data"].each do |key, conn_data|
+      next unless key.end_with?("_metafields")
+
+      conn_data["nodes"].each do |metafield_def|
+        metafields << ShopSchemaClient::ShopSchemaComposer::MetafieldDefinition.from_graphql(metafield_def)
+      end
     end
 
     catalog = ShopSchemaClient::ShopSchemaComposer::MetaschemaCatalog.new
@@ -126,15 +138,13 @@ class App
       { errors: errors.map(&:to_h) }
     else
       # valid request shape; transform it and send it...
-      xform_document = ShopSchemaClient::RequestTransformer.new(query).perform
-      xform_query = GraphQL::Language::Printer.new.print(xform_document)
-      puts xform_query
+      request = ShopSchemaClient::RequestTransformer.new(query).perform
+      rendered_query = request.query
+      puts rendered_query
 
-      result = shop_request(xform_query, query.variables.to_h)
-      if result["data"]
-        result["data"] = ShopSchemaClient::ResponseTransformer.new(@shop_schema, query.document).perform(result["data"])
-      end
-      result
+      response = shop_request(rendered_query, query.variables.to_h)
+      response = ShopSchemaClient::ResponseTransformer.new(response, request.transforms).perform
+      response
     end
   end
 end
