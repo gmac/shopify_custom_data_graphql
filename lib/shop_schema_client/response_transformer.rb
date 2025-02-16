@@ -16,17 +16,17 @@ module ShopSchemaClient
     def transform_object_scope(object_value, current_map)
       return nil if object_value.nil?
 
-      expand_extensions(object_value) if current_map["ex"]
+      if (extensions_ns = current_map["ex"])
+        expand_extensions(object_value, extensions_ns)
+      end
 
       if (fields = current_map["f"])
         fields.each do |field_name, next_map|
           next_value = object_value[field_name]
           next if next_value.nil?
 
-          if (transforms = next_map["fx"])
-            next_value = object_value[field_name] = transforms.reduce(next_value) do |val, xform|
-              transform_field_value(val, xform)
-            end
+          if (transform = next_map["fx"])
+            next_value = object_value[field_name] = transform_field_value(next_value, transform)
           end
 
           case next_value
@@ -39,14 +39,14 @@ module ShopSchemaClient
       end
 
       if (possible_types = current_map["if"])
-        actual_type = object_value["__typehint"]
+        actual_type = object_value[RequentTransformer::TYPENAME_HINT]
         possible_types.each do |possible_type, next_map|
           next unless possible_type == actual_type || possible_type.split("|").include?(actual_type)
 
           transform_object_scope(object_value, next_map)
         end
 
-        object_value.delete("__typehint")
+        object_value.delete(RequentTransformer::TYPENAME_HINT)
       end
 
       object_value
@@ -63,18 +63,18 @@ module ShopSchemaClient
       end
     end
 
-    def transform_field_value(object_value, transform)
+    def transform_field_value(field_value, transform)
       case transform["do"]
       when "mf_val", "mf_ref", "mf_refs"
-        MetafieldTypeResolver.resolve(transform["t"], object_value, transform["s"])
+        MetafieldTypeResolver.resolve(transform["t"], field_value, transform["s"])
       when "mo_typename"
-        MetafieldTypeResolver.metaobject_typename(object_value)
+        MetafieldTypeResolver.metaobject_typename(field_value)
       when "ex_typename"
-        MetafieldTypeResolver.extensions_typename(object_value)
+        MetafieldTypeResolver.extensions_typename(field_value)
       end
     end
 
-    def expand_extensions(object_value)
+    def expand_extensions(object_value, extensions_ns)
       extensions_scope = {}
       object_value.reject! do |key, value|
         next false unless key.start_with?(RequestTransformer::EXTENSIONS_PREFIX)
@@ -83,7 +83,7 @@ module ShopSchemaClient
         true
       end
 
-      object_value["extensions"] = extensions_scope
+      object_value[extensions_ns] = extensions_scope
     end
   end
 end

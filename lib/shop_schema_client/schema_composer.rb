@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-require_relative "shop_schema_composer/metafield_definition"
-require_relative "shop_schema_composer/metaobject_definition"
-require_relative "shop_schema_composer/metaschema_catalog"
+require_relative "schema_composer/metafield_definition"
+require_relative "schema_composer/metaobject_definition"
+require_relative "schema_composer/metaschema_catalog"
 
 module ShopSchemaClient
-  class ShopSchemaComposer
+  class SchemaComposer
     class MetafieldDirective < GraphQL::Schema::Directive
       graphql_name "metafield"
       locations FIELD_DEFINITION
@@ -52,7 +52,7 @@ module ShopSchemaClient
         type = build_color_metatype
         is_list ? type.to_list_type : type
       when "collection_reference", "list.collection_reference"
-        is_list ? @schema_types["Collection"] : @schema_types["Collection"]
+        is_list ? @schema_types["CollectionConnection"] : @schema_types["Collection"]
       when "company_reference", "list.company_reference"
         is_list ? @schema_types["CompanyConnection"] : @schema_types["Company"]
       when "customer_reference", "list.customer_reference"
@@ -202,13 +202,6 @@ module ShopSchemaClient
       end
     end
 
-    def build_rich_text_metatype
-      @schema_types[MetafieldTypeResolver::RICH_TEXT_TYPENAME] ||= Class.new(GraphQL::Schema::Scalar) do
-        graphql_name(MetafieldTypeResolver::RICH_TEXT_TYPENAME)
-        description("A parsed rich text data structure in JSON format.")
-      end
-    end
-
     def build_dimension_metatype
       builder = self
       @schema_types[MetafieldTypeResolver::DIMENSION_TYPENAME] ||= Class.new(GraphQL::Schema::Object) do
@@ -227,6 +220,13 @@ module ShopSchemaClient
         field :max, builder.schema_types["Float"]
         field :min, builder.schema_types["Float"]
         field :value, builder.schema_types["Float"]
+      end
+    end
+
+    def build_rich_text_metatype
+      @schema_types[MetafieldTypeResolver::RICH_TEXT_TYPENAME] ||= Class.new(GraphQL::Schema::Scalar) do
+        graphql_name(MetafieldTypeResolver::RICH_TEXT_TYPENAME)
+        description("A parsed rich text data structure in JSON format.")
       end
     end
 

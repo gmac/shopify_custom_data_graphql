@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module ShopSchemaClient
-  class ShopSchemaComposer
+  class SchemaComposer
     class MetaschemaCatalog
       def initialize
         @metafields_by_owner = {}

@@ -1,0 +1,394 @@
+[
+  {
+    "key": "boolean",
+    "description": "",
+    "type": { "name": "boolean" },
+    "validations": [],
+    "ownerType": "PRODUCT"
+  },
+  {
+    "key": "color",
+    "description": "",
+    "type": { "name": "color" },
+    "validations": [],
+    "ownerType": "PRODUCT"
+  },
+  {
+    "key": "color_list",
+    "description": "",
+    "type": { "name": "list.color" },
+    "validations": [],
+    "ownerType": "PRODUCT"
+  },
+  {
+    "key": "collection_reference",
+    "description": "",
+    "type": { "name": "collection_reference" },
+    "validations": [],
+    "ownerType": "PRODUCT"
+  },
+  {
+    "key": "collection_reference_list",
+    "description": "",
+    "type": { "name": "list.collection_reference" },
+    "validations": [],
+    "ownerType": "PRODUCT"
+  },
+  {
+    "key": "company_reference",
+    "description": "",
+    "type": { "name": "company_reference" },
+    "validations": [],
+    "ownerType": "PRODUCT"
+  },
+  {
+    "key": "company_reference_list",
+    "description": "",
+    "type": { "name": "list.company_reference" },
+    "validations": [],
+    "ownerType": "PRODUCT"
+  },
+  {
+    "key": "customer_reference",
+    "description": "",
+    "type": { "name": "customer_reference" },
+    "validations": [],
+    "ownerType": "PRODUCT"
+  },
+  {
+    "key": "customer_reference_list",
+    "description": "",
+    "type": { "name": "list.customer_reference" },
+    "validations": [],
+    "ownerType": "PRODUCT"
+  },
+  {
+    "key": "date",
+    "description": "",
+    "type": { "name": "date" },
+    "validations": [],
+    "ownerType": "PRODUCT"
+  },
+  {
+    "key": "date_list",
+    "description": "",
+    "type": { "name": "list.date" },
+    "validations": [],
+    "ownerType": "PRODUCT"
+  },
+  {
+    "key": "date_time",
+    "description": "",
+    "type": { "name": "date_time" },
+    "validations": [],
+    "ownerType": "PRODUCT"
+  },
+  {
+    "key": "date_time_list",
+    "description": "",
+    "type": { "name": "list.date_time" },
+    "validations": [],
+    "ownerType": "PRODUCT"
+  },
+  {
+    "key": "decimal",
+    "description": "",
+    "type": { "name": "number_decimal" },
+    "validations": [],
+    "ownerType": "PRODUCT"
+  },
+  {
+    "key": "decimal_list",
+    "description": "",
+    "type": { "name": "list.number_decimal" },
+    "validations": [],
+    "ownerType": "PRODUCT"
+  },
+  {
+    "key": "dimension",
+    "description": "",
+    "type": { "name": "dimension" },
+    "validations": [],
+    "ownerType": "PRODUCT"
+  },
+  {
+    "key": "dimension_list",
+    "description": "",
+    "type": { "name": "list.dimension" },
+    "validations": [],
+    "ownerType": "PRODUCT"
+  },
+  {
+    "key": "file_reference",
+    "description": "",
+    "type": { "name": "file_reference" },
+    "validations": [],
+    "ownerType": "PRODUCT"
+  },
+  {
+    "key": "file_reference_list",
+    "description": "",
+    "type": { "name": "list.file_reference" },
+    "validations": [],
+    "ownerType": "PRODUCT"
+  },
+  {
+    "key": "identity",
+    "description": "",
+    "type": { "name": "id" },
+    "validations": [],
+    "ownerType": "PRODUCT"
+  },
+  {
+    "key": "integer",
+    "description": "",
+    "type": { "name": "number_integer" },
+    "validations": [],
+    "ownerType": "PRODUCT"
+  },
+  {
+    "key": "integer_list",
+    "description": "",
+    "type": { "name": "list.number_integer" },
+    "validations": [],
+    "ownerType": "PRODUCT"
+  },
+  {
+    "key": "json",
+    "description": "",
+    "type": { "name": "json" },
+    "validations": [],
+    "ownerType": "PRODUCT"
+  },
+  {
+    "key": "language",
+    "description": "",
+    "type": { "name": "language" },
+    "validations": [],
+    "ownerType": "PRODUCT"
+  },
+  {
+    "key": "link",
+    "description": "",
+    "type": { "name": "link" },
+    "validations": [],
+    "ownerType": "PRODUCT"
+  },
+  {
+    "key": "link_list",
+    "description": "",
+    "type": { "name": "list.link" },
+    "validations": [],
+    "ownerType": "PRODUCT"
+  },
+  {
+    "key": "metaobject_reference",
+    "description": "",
+    "type": { "name": "metaobject_reference" },
+    "validations": [
+      {
+        "name": "metaobject_definition_id",
+        "value": "gid://shopify/MetaobjectDefinition/Taco"
+      }
+    ],
+    "ownerType": "PRODUCT"
+  },
+  {
+    "key": "metaobject_reference_list",
+    "description": "",
+    "type": { "name": "list.metaobject_reference" },
+    "validations": [
+      {
+        "name": "metaobject_definition_id",
+        "value": "gid://shopify/MetaobjectDefinition/Taco"
+      }
+    ],
+    "ownerType": "PRODUCT"
+  },
+  {
+    "key": "mixed_reference",
+    "description": "",
+    "type": { "name": "mixed_reference" },
+    "validations": [],
+    "ownerType": "PRODUCT"
+  },
+  {
+    "key": "mixed_reference_list",
+    "description": "",
+    "type": { "name": "list.mixed_reference" },
+    "validations": [],
+    "ownerType": "PRODUCT"
+  },
+  {
+    "key": "money",
+    "description": "",
+    "type": { "name": "money" },
+    "validations": [],
+    "ownerType": "PRODUCT"
+  },
+  {
+    "key": "multi_line_text",
+    "description": "",
+    "type": { "name": "multi_line_text_field" },
+    "validations": [],
+    "ownerType": "PRODUCT"
+  },
+  {
+    "key": "order_reference",
+    "description": "",
+    "type": { "name": "order_reference" },
+    "validations": [],
+    "ownerType": "PRODUCT"
+  },
+  {
+    "key": "page_reference",
+    "description": "",
+    "type": { "name": "page_reference" },
+    "validations": [],
+    "ownerType": "PRODUCT"
+  },
+  {
+    "key": "page_reference_list",
+    "description": "",
+    "type": { "name": "list.page_reference" },
+    "validations": [],
+    "ownerType": "PRODUCT"
+  },
+  {
+    "key": "product_reference",
+    "description": "",
+    "type": { "name": "product_reference" },
+    "validations": [],
+    "ownerType": "PRODUCT"
+  },
+  {
+    "key": "product_reference_list",
+    "description": "",
+    "type": { "name": "list.product_reference" },
+    "validations": [],
+    "ownerType": "PRODUCT"
+  },
+  {
+    "key": "product_taxonomy_value_reference",
+    "description": "",
+    "type": { "name": "product_taxonomy_value_reference" },
+    "validations": [],
+    "ownerType": "PRODUCT"
+  },
+  {
+    "key": "product_taxonomy_value_reference_list",
+    "description": "",
+    "type": { "name": "list.product_taxonomy_value_reference" },
+    "validations": [],
+    "ownerType": "PRODUCT"
+  },
+  {
+    "key": "rating",
+    "description": "",
+    "type": { "name": "rating" },
+    "validations": [
+      {
+        "name": "scale_min",
+        "value": "1.0"
+      },
+      {
+        "name": "scale_max",
+        "value": "5.0"
+      }
+    ],
+    "ownerType": "PRODUCT"
+  },
+  {
+    "key": "rating_list",
+    "description": "",
+    "type": { "name": "list.rating" },
+    "validations": [
+      {
+        "name": "scale_min",
+        "value": "1.0"
+      },
+      {
+        "name": "scale_max",
+        "value": "5.0"
+      }
+    ],
+    "ownerType": "PRODUCT"
+  },
+  {
+    "key": "rich_text",
+    "description": "",
+    "type": { "name": "rich_text_field" },
+    "validations": [],
+    "ownerType": "PRODUCT"
+  },
+  {
+    "key": "single_line_text",
+    "description": "",
+    "type": { "name": "single_line_text_field" },
+    "validations": [],
+    "ownerType": "PRODUCT"
+  },
+  {
+    "key": "single_line_text_list",
+    "description": "",
+    "type": { "name": "list.single_line_text_field" },
+    "validations": [],
+    "ownerType": "PRODUCT"
+  },
+  {
+    "key": "url",
+    "description": "",
+    "type": { "name": "url" },
+    "validations": [],
+    "ownerType": "PRODUCT"
+  },
+  {
+    "key": "url_list",
+    "description": "",
+    "type": { "name": "list.url" },
+    "validations": [],
+    "ownerType": "PRODUCT"
+  },
+  {
+    "key": "variant_reference",
+    "description": "",
+    "type": { "name": "variant_reference" },
+    "validations": [],
+    "ownerType": "PRODUCT"
+  },
+  {
+    "key": "variant_reference_list",
+    "description": "",
+    "type": { "name": "list.variant_reference" },
+    "validations": [],
+    "ownerType": "PRODUCT"
+  },
+  {
+    "key": "volume",
+    "description": "",
+    "type": { "name": "volume" },
+    "validations": [],
+    "ownerType": "PRODUCT"
+  },
+  {
+    "key": "volume_list",
+    "description": "",
+    "type": { "name": "list.volume" },
+    "validations": [],
+    "ownerType": "PRODUCT"
+  },
+  {
+    "key": "weight",
+    "description": "",
+    "type": { "name": "weight" },
+    "validations": [],
+    "ownerType": "PRODUCT"
+  },
+  {
+    "key": "weight_list",
+    "description": "",
+    "type": { "name": "list.weight" },
+    "validations": [],
+    "ownerType": "PRODUCT"
+  }
+]

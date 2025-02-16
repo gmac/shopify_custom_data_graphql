@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module ShopSchemaClient
-  class ShopSchemaComposer
+  class SchemaComposer
     MetafieldDefinition = Struct.new(
       :key,
       :type,
