@@ -9,14 +9,21 @@ module ShopSchemaClient
       def initialize(document, transform_map)
         @document = document
         @transform_map = transform_map
+        @query = nil
+        @transforms = nil
+        @response_transformer = nil
       end
 
       def query
-        GraphQL::Language::Printer.new.print(@document)
+        @query ||= GraphQL::Language::Printer.new.print(@document)
       end
 
       def transforms
-        @transform_map.as_json
+        @transforms ||= @transform_map.as_json
+      end
+
+      def response_transformer
+        @response_transformer ||= ResponseTransformer.new(transforms)
       end
 
       def as_json

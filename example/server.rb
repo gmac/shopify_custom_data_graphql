@@ -124,7 +124,6 @@ class App
     catalog = ShopSchemaClient::ShopSchemaComposer::MetaschemaCatalog.new
     catalog.add_metaobjects(metaobjects)
     catalog.add_metafields(metafields)
-    catalog
 
     # build them into a composed shop schema...
     @shop_schema = ShopSchemaClient::ShopSchemaComposer.new(base_schema, catalog).perform
@@ -139,12 +138,10 @@ class App
     else
       # valid request shape; transform it and send it...
       request = ShopSchemaClient::RequestTransformer.new(query).perform
-      rendered_query = request.query
-      puts rendered_query
+      puts request.query
 
-      response = shop_request(rendered_query, query.variables.to_h)
-      response = ShopSchemaClient::ResponseTransformer.new(response, request.transforms).perform
-      response
+      response = shop_request(request.query, query.variables.to_h)
+      request.response_transformer.perform(response)
     end
   end
 end

@@ -2,14 +2,13 @@
 
 module ShopSchemaClient
   class ResponseTransformer
-    def initialize(result, transform_map)
+    def initialize(transform_map)
       @transform_map = transform_map
-      @result = result
     end
 
-    def perform
-      @result["data"] = transform_object_scope(@result["data"], @transform_map) if @result["data"]
-      @result
+    def perform(result)
+      result["data"] = transform_object_scope(result["data"], @transform_map) if result["data"]
+      result
     end
 
     private
