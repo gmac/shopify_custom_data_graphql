@@ -61,13 +61,9 @@ describe "First Test" do
     puts errors.map(&:message) if errors.any?
 
     # binding.pry
-    xform_result = ShopSchemaClient::RequestTransformer.new(query).perform
-    # puts xform_result.query
-    pp xform_result.transform_map.as_json
-    #puts JSON.pretty_generate(xform_result.transform_map.as_json)
-
+    request = ShopSchemaClient::RequestTransformer.new(query).perform
     http_result = JSON.parse(File.read("#{__dir__}/../fixtures/response.json"))
-    pp ShopSchemaClient::ResponseTransformer.new(http_result, xform_result.transforms).perform
+    pp request.response_transformer.perform(http_result)
     assert true
   end
 end
