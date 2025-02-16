@@ -1,19 +1,21 @@
 {
     "data": {
-        "product": {
+        "node": {
             "id": "gid://shopify/Product/6885875646486",
             "title": "Neptune Discovery Lab",
-            "__extensions__flexRating": {
+            "__ex___typename": "Product",
+            "__ex_flexRating": {
                 "value": "1.5"
             },
-            "__extensions__similarProduct": {
+            "__ex_similarProduct": {
                 "reference": {
                     "id": "gid://shopify/Product/6561850556438",
                     "title": "Aquanauts Crystal Explorer Sub"
                 }
             },
-            "__extensions__myTaco": {
+            "__ex_myTaco": {
                 "reference": {
+                    "__typename": "taco",
                     "name": {
                         "value": "Al Pastor"
                     },
@@ -45,7 +47,8 @@
                         }
                     }
                 }
-            }
+            },
+            "__typehint": "Product"
         }
     },
     "extensions": {

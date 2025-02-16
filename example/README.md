@@ -37,6 +37,13 @@ Start by clicking open the `Docs` panel and review the introspection. Note that 
     title
     extensions {
       flexRating
+      similarProduct {
+        id
+        title
+        extensions {
+          tacoPairing { name }
+        }
+      }
       tacoPairing {
         name
         protein {
@@ -68,6 +75,6 @@ Start by clicking open the `Docs` panel and review the introspection. Note that 
 4. Requests are first validated against the composed shop schema.
   - Invalid requests return their validation errors directly.
   - Valid requests are transformed and sent to the Admin API.
-5. Results are transformed to match the shape of the original shop request.
+5. Server results are transformed to match the shape of the original shop request.
 
-While this is all being done here with a small Ruby server, this same process could work directly in a web browser in development mode. In production, we'd want to cache the transformed queries and use them directly to eliminate pre-processing. Requests always need post-processing.
+While this is all being done here with a small Ruby server, this same process could work directly in a web browser in development mode. In production, we'd want to cache the transformed queries and use them directly to eliminate pre-processing. Requests always need modest post-processing.

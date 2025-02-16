@@ -24,9 +24,7 @@ module ShopSchemaClient
       end
 
       def metaobject_typename(metaobject_type)
-        metaobject_type[0] = metaobject_type[0].upcase
-        metaobject_type.gsub!(/_\w/) { _1[1].upcase }
-        "#{metaobject_type}#{METAOBJECT_TYPE_SUFFIX}"
+        "#{metaobject_type.camelize}#{METAOBJECT_TYPE_SUFFIX}"
       end
 
       def metaobject_type?(type_name)
@@ -130,10 +128,9 @@ module ShopSchemaClient
       end
 
       def unit_value_with_selections(obj, selections, type_name)
-        selections.each_with_object({}) do |node, memo|
-          # should also anticipate fragments...
-          field_name = node.alias || node.name
-          case node.name
+        selections.each_with_object({}) do |sel, memo|
+          field_name, node_name = selection_alias_and_field(sel)
+          case node_name
           when "unit"
             memo[field_name] = obj["unit"]
           when "value"
@@ -145,10 +142,9 @@ module ShopSchemaClient
       end
 
       def money_with_selections(obj, selections)
-        selections.each_with_object({}) do |node, memo|
-          # should also anticipate fragments...
-          field_name = node.alias || node.name
-          case node.name
+        selections.each_with_object({}) do |sel, memo|
+          field_name, node_name = selection_alias_and_field(sel)
+          case node_name
           when "amount"
             memo[field_name] = Float(obj["amount"])
           when "currencyCode"
@@ -160,10 +156,9 @@ module ShopSchemaClient
       end
 
       def rating_with_selections(obj, selections)
-        selections.each_with_object({}) do |node, memo|
-          # should also anticipate fragments...
-          field_name = node.alias || node.name
-          case node.name
+        selections.each_with_object({}) do |sel, memo|
+          field_name, node_name = selection_alias_and_field(sel)
+          case node_name
           when "min"
             memo[field_name] = Float(obj["scale_min"])
           when "max"
@@ -174,6 +169,10 @@ module ShopSchemaClient
             memo[field_name] = RATING_TYPENAME
           end
         end
+      end
+
+      def selection_alias_and_field(sel)
+        sel.include?(":") ? sel.split(":") : [sel, sel]
       end
     end
   end

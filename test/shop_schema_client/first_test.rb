@@ -4,7 +4,7 @@ require "test_helper"
 
 describe "First Test" do
   QUERY = %|query GetProduct($id: ID!){
-    node(id: $id) { ...on Product{
+    node(id: $id) {... on Product {
       id
       title
       extensions {
@@ -28,7 +28,7 @@ describe "First Test" do
           protein {
             name
             volume {
-              value
+              sfoo:value
               unit
               __typename
             }
@@ -44,7 +44,7 @@ describe "First Test" do
         }
       }
     }
-}}
+  }}
   fragment Sfoo on ProductExtensions { flexRating }
   fragment Volume on VolumeMetatype { value unit }
   |
@@ -61,11 +61,13 @@ describe "First Test" do
     puts errors.map(&:message) if errors.any?
 
     # binding.pry
-    document2 = ShopSchemaClient::RequestTransformer.new(query).perform
-    puts GraphQL::Language::Printer.new.print(document2)
+    xform_result = ShopSchemaClient::RequestTransformer.new(query).perform
+    # puts xform_result.query
+    pp xform_result.transform_map.as_json
+    #puts JSON.pretty_generate(xform_result.transform_map.as_json)
 
-    response = JSON.parse(File.read("#{__dir__}/../fixtures/response.json"))
-    pp ShopSchemaClient::ResponseTransformer.new(shop_schema, document).perform(response["data"])
+    http_result = JSON.parse(File.read("#{__dir__}/../fixtures/response.json"))
+    pp ShopSchemaClient::ResponseTransformer.new(http_result, xform_result.transforms).perform
     assert true
   end
 end

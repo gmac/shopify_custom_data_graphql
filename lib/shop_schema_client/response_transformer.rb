@@ -2,112 +2,89 @@
 
 module ShopSchemaClient
   class ResponseTransformer
-    def initialize(shop_schema, document)
-      @schema = shop_schema
-      @owner_types = @schema.possible_types(@schema.get_type("HasMetafields")).to_set
-      @document = document
+    def initialize(result, transform_map)
+      @transform_map = transform_map
+      @result = result
     end
 
-    def perform(result)
-      op = @document.definitions.first
-      transform_object_scope(result, @schema.query, op.selections, @schema.query.graphql_name)
+    def perform
+      @result["data"] = transform_object_scope(@result["data"], @transform_map) if @result["data"]
+      @result
     end
 
     private
 
-    def transform_object_scope(raw_object, parent_type, selections, typename = nil)
-      return nil if raw_object.nil?
+    def transform_object_scope(object_value, current_map)
+      return nil if object_value.nil?
 
-      # @todo need some kind of automatically-resolved type hint to make abstracts work...
-      typename ||= raw_object["_export__typename"]
-      raw_object.delete("_export__typename")
+      expand_extensions(object_value) if current_map["ex"]
 
-      # shift all `__extensions__` fields into a dedicated scope
-      scope_extensions!(raw_object) if @owner_types.include?(parent_type)
+      if (fields = current_map["f"])
+        fields.each do |field_name, next_map|
+          next_value = object_value[field_name]
+          next if next_value.nil?
 
-      is_metafields_scope = MetafieldTypeResolver.extensions_type?(parent_type.graphql_name) ||
-        MetafieldTypeResolver.metaobject_type?(parent_type.graphql_name)
-
-      selections.each do |node|
-        case node
-        when GraphQL::Language::Nodes::Field
-          field_name = node.alias || node.name
-          field = parent_type.get_field(node.name)
-          node_type = unwrap_non_null(field.type)
-          named_type = node_type.unwrap
-
-          if is_metafields_scope && (metafield_attrs = field.directives.find { _1.graphql_name == "metafield" }&.arguments&.keyword_arguments)
-            metafield_type = metafield_attrs[:type]
-            raw_object[field_name] = MetafieldTypeResolver.resolve(metafield_type, raw_object[field_name], node.selections)
-
-            # only continue traversing when following metafield references
-            # otherwise, we can assume basic metafield value types are now fully resolved.
-            next unless MetafieldTypeResolver.reference?(metafield_type)
+          if (transforms = next_map["fx"])
+            next_value = object_value[field_name] = transforms.reduce(next_value) do |val, xform|
+              transform_field_value(val, xform)
+            end
           end
 
-          if node_type.list?
-            transform_list_scope(raw_object[field_name], node_type, node.selections)
-          elsif named_type.kind.composite?
-            transform_object_scope(raw_object[field_name], named_type, node.selections)
+          case next_value
+          when Hash
+            transform_object_scope(next_value, next_map)
+          when Array
+            transform_list_scope(next_value, next_map)
           end
-
-        # # Need to handle fragments...
-        # when GraphQL::Language::Nodes::InlineFragment
-        #   fragment_type = node.type ? @supergraph.memoized_schema_types[node.type.name] : parent_type
-        #   next unless typename_in_type?(typename, fragment_type)
-
-        #   result = transform_object_scope(raw_object, fragment_type, node.selections, typename)
-        #   return nil if result.nil?
-
-        # when GraphQL::Language::Nodes::FragmentSpread
-        #   fragment = @request.fragment_definitions[node.name]
-        #   fragment_type = @supergraph.memoized_schema_types[fragment.type.name]
-        #   next unless typename_in_type?(typename, fragment_type)
-
-        #   result = transform_object_scope(raw_object, fragment_type, fragment.selections, typename)
-        #   return nil if result.nil?
-
-        else
-          raise "Invalid node type"
         end
       end
 
-      raw_object
+      if (possible_types = current_map["if"])
+        actual_type = object_value["__typehint"]
+        possible_types.each do |possible_type, next_map|
+          next unless possible_type == actual_type || possible_type.split("|").include?(actual_type)
+
+          transform_object_scope(object_value, next_map)
+        end
+
+        object_value.delete("__typehint")
+      end
+
+      object_value
     end
 
-    def transform_list_scope(list_value, current_node_type, selections)
-      return if list_value.nil?
-
-      next_node_type = unwrap_non_null(current_node_type).of_type
-      named_type = next_node_type.unwrap
-
+    def transform_list_scope(list_value, current_map)
       list_value.each do |list_item|
-        if next_node_type.list?
-          transform_list_scope(list_item, next_node_type, selections)
-        elsif named_type.kind.composite?
-          transform_object_scope(list_item, named_type, selections)
+        case list_item
+        when Hash
+          transform_object_scope(list_item, current_map)
+        when Array
+          transform_list_scope(list_item, current_map)
         end
       end
     end
 
-    def scope_extensions!(raw_object)
-      extensions_scope = nil
-      raw_object.reject! do |key, value|
+    def transform_field_value(object_value, transform)
+      case transform["do"]
+      when "mf_val", "mf_ref", "mf_refs"
+        MetafieldTypeResolver.resolve(transform["t"], object_value, transform["s"])
+      when "mo_typename"
+        MetafieldTypeResolver.metaobject_typename(object_value)
+      when "ex_typename"
+        MetafieldTypeResolver.extensions_typename(object_value)
+      end
+    end
+
+    def expand_extensions(object_value)
+      extensions_scope = {}
+      object_value.reject! do |key, value|
         next false unless key.start_with?(RequestTransformer::EXTENSIONS_PREFIX)
 
-        extensions_scope ||= {}
         extensions_scope[key.sub(RequestTransformer::EXTENSIONS_PREFIX, "")] = value
         true
       end
 
-      if extensions_scope
-        raw_object["extensions"] = extensions_scope
-      end
-    end
-
-    def unwrap_non_null(type)
-      type = type.of_type while type.non_null?
-      type
+      object_value["extensions"] = extensions_scope
     end
   end
 end
