@@ -390,5 +390,173 @@
     "type": { "name": "list.weight" },
     "validations": [],
     "ownerType": "PRODUCT"
+  },
+  {
+    "key": "test",
+    "description": "",
+    "type": { "name": "boolean" },
+    "validations": [],
+    "ownerType": "API_PERMISSION"
+  },
+  {
+    "key": "test",
+    "description": "",
+    "type": { "name": "boolean" },
+    "validations": [],
+    "ownerType": "ARTICLE"
+  },
+  {
+    "key": "test",
+    "description": "",
+    "type": { "name": "boolean" },
+    "validations": [],
+    "ownerType": "BLOG"
+  },
+  {
+    "key": "test",
+    "description": "",
+    "type": { "name": "boolean" },
+    "validations": [],
+    "ownerType": "CARTTRANSFORM"
+  },
+  {
+    "key": "test",
+    "description": "",
+    "type": { "name": "boolean" },
+    "validations": [],
+    "ownerType": "COLLECTION"
+  },
+  {
+    "key": "test",
+    "description": "",
+    "type": { "name": "boolean" },
+    "validations": [],
+    "ownerType": "COMPANY"
+  },
+  {
+    "key": "test",
+    "description": "",
+    "type": { "name": "boolean" },
+    "validations": [],
+    "ownerType": "COMPANY_LOCATION"
+  },
+  {
+    "key": "test",
+    "description": "",
+    "type": { "name": "boolean" },
+    "validations": [],
+    "ownerType": "CUSTOMER"
+  },
+  {
+    "key": "test",
+    "description": "",
+    "type": { "name": "boolean" },
+    "validations": [],
+    "ownerType": "DELIVERY_CUSTOMIZATION"
+  },
+  {
+    "key": "test",
+    "description": "",
+    "type": { "name": "boolean" },
+    "validations": [],
+    "ownerType": "DISCOUNT"
+  },
+  {
+    "key": "test",
+    "description": "",
+    "type": { "name": "boolean" },
+    "validations": [],
+    "ownerType": "DRAFTORDER"
+  },
+  {
+    "key": "test",
+    "description": "",
+    "type": { "name": "boolean" },
+    "validations": [],
+    "ownerType": "FULFILLMENT_CONSTRAINT_RULE"
+  },
+  {
+    "key": "test",
+    "description": "",
+    "type": { "name": "boolean" },
+    "validations": [],
+    "ownerType": "GIFT_CARD_TRANSACTION"
+  },
+  {
+    "key": "test",
+    "description": "",
+    "type": { "name": "boolean" },
+    "validations": [],
+    "ownerType": "LOCATION"
+  },
+  {
+    "key": "test",
+    "description": "",
+    "type": { "name": "boolean" },
+    "validations": [],
+    "ownerType": "MARKET"
+  },
+  {
+    "key": "test",
+    "description": "",
+    "type": { "name": "boolean" },
+    "validations": [],
+    "ownerType": "MEDIA_IMAGE"
+  },
+  {
+    "key": "test",
+    "description": "",
+    "type": { "name": "boolean" },
+    "validations": [],
+    "ownerType": "ORDER"
+  },
+  {
+    "key": "test",
+    "description": "",
+    "type": { "name": "boolean" },
+    "validations": [],
+    "ownerType": "ORDER_ROUTING_LOCATION_RULE"
+  },
+  {
+    "key": "test",
+    "description": "",
+    "type": { "name": "boolean" },
+    "validations": [],
+    "ownerType": "PAGE"
+  },
+  {
+    "key": "test",
+    "description": "",
+    "type": { "name": "boolean" },
+    "validations": [],
+    "ownerType": "PAYMENT_CUSTOMIZATION"
+  },
+  {
+    "key": "test",
+    "description": "",
+    "type": { "name": "boolean" },
+    "validations": [],
+    "ownerType": "PRODUCTVARIANT"
+  },
+  {
+    "key": "test",
+    "description": "",
+    "type": { "name": "boolean" },
+    "validations": [],
+    "ownerType": "SELLING_PLAN"
+  },
+  {
+    "key": "test",
+    "description": "",
+    "type": { "name": "boolean" },
+    "validations": [],
+    "ownerType": "SHOP"
+  },
+  {
+    "key": "test",
+    "description": "",
+    "type": { "name": "boolean" },
+    "validations": [],
+    "ownerType": "VALIDATION"
   }
 ]

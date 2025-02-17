@@ -56,6 +56,16 @@ describe "SchemaComposer" do
     assert_equal "ProductExtensions!", extensions_field.type.to_type_signature
   end
 
+  def test_builds_native_type_extensions_scope_for_all_owner_types
+    shop_schema.possible_types(shop_schema.get_type("HasMetafields")).each do |owner_type|
+      extensions_field = owner_type.get_field("extensions")
+      puts owner_type.graphql_name if extensions_field.nil?
+      assert false
+      #assert extensions_field, "Expected extensions scope for type `#{owner_type.graphql_name}`."
+      #assert_equal "#{owner_type.graphql_name}Extensions!", extensions_field.type.to_type_signature
+    end
+  end
+
   def test_builds_connection_fields
     field = shop_schema.get_type("ProductExtensions").get_field("metaobjectReferenceList")
     assert_equal "Int", field.get_argument("first").type.to_type_signature
