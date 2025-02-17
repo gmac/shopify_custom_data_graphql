@@ -109,7 +109,7 @@ class App
     # load in metaobject definitions and product metafields...
     result = shop_request(SCHEMA_QUERY)
     metaobjects = result.dig("data", "metaobjectDefinitions", "nodes").map do |metaobject_def|
-      ShopSchemaClient::ShopSchemaComposer::MetaobjectDefinition.from_graphql(metaobject_def)
+      ShopSchemaClient::SchemaComposer::MetaobjectDefinition.from_graphql(metaobject_def)
     end
 
     metafields = []
@@ -117,16 +117,16 @@ class App
       next unless key.end_with?("_metafields")
 
       conn_data["nodes"].each do |metafield_def|
-        metafields << ShopSchemaClient::ShopSchemaComposer::MetafieldDefinition.from_graphql(metafield_def)
+        metafields << ShopSchemaClient::SchemaComposer::MetafieldDefinition.from_graphql(metafield_def)
       end
     end
 
-    catalog = ShopSchemaClient::ShopSchemaComposer::MetaschemaCatalog.new
+    catalog = ShopSchemaClient::SchemaComposer::MetaschemaCatalog.new
     catalog.add_metaobjects(metaobjects)
     catalog.add_metafields(metafields)
 
     # build them into a composed shop schema...
-    @shop_schema = ShopSchemaClient::ShopSchemaComposer.new(base_schema, catalog).perform
+    @shop_schema = ShopSchemaClient::SchemaComposer.new(base_schema, catalog).perform
     puts "Shop schema loaded!"
   end
 
@@ -137,12 +137,14 @@ class App
       { errors: errors.map(&:to_h) }
     else
       # valid request shape; transform it and send it...
-      request = ShopSchemaClient::RequestTransformer.new(query).perform
-      puts request.query
-
-      response = shop_request(request.query, query.variables.to_h)
-      request.response_transformer.perform(response)
+      shop_query = ShopSchemaClient::RequestTransformer.new(query).perform
+      shop_query.perform do |query_string|
+        puts query_string
+        shop_request(query_string, query.variables.to_h)
+      end
     end
+  rescue ShopSchemaClient::ValidationError => e
+    { errors: [{ message: e.message }] }
   end
 end
 

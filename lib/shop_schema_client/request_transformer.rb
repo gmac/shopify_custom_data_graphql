@@ -5,6 +5,7 @@ require_relative "request_transformer/result"
 
 module ShopSchemaClient
   class RequestTransformer
+    TYPENAME_HINT = "__typehint"
     EXTENSIONS_PREFIX = "__ex_"
     EXTENSIONS_SCOPE = :extensions
     METAOBJECT_SCOPE = :metaobject
@@ -29,16 +30,26 @@ module ShopSchemaClient
 
     private
 
+    def validate_field_alias(field_alias)
+      if field_alias.start_with?(EXTENSIONS_PREFIX)
+        raise ValidationError, "Field aliases starting with `#{EXTENSIONS_PREFIX}` are reserved for system use."
+      elsif field_alias == TYPENAME_HINT
+        raise ValidationError, "Field alias `#{TYPENAME_HINT}` is reserved for system use."
+      end
+    end
+
     def transform_scope(parent_type, input_selections, scope_type: NATIVE_SCOPE)
       results = input_selections.flat_map do |node|
         case node
         when GraphQL::Language::Nodes::Field
+          validate_field_alias(node.alias) if node.alias
+
           @transform_map.field_breadcrumb(node.alias || node.name) do
             if scope_type == EXTENSIONS_SCOPE || scope_type == METAOBJECT_SCOPE
               build_metafield(parent_type, node, scope_type: scope_type)
             elsif scope_type == NATIVE_SCOPE && node.name == "extensions" && @owner_types.include?(parent_type)
               next_type = parent_type.get_field(node.name).type.unwrap
-              @transform_map.current_scope.parent.has_extensions = true
+              @transform_map.current_scope.parent.extensions_ns = node.alias || node.name
               transform_scope(next_type, node.selections, scope_type: EXTENSIONS_SCOPE)
             elsif node.selections&.any?
               next_type = parent_type.get_field(node.name).type.unwrap
@@ -102,7 +113,7 @@ module ShopSchemaClient
         possible_types = @schema.possible_types(fragment_type).map(&:graphql_name).tap(&:sort!).join("|")
         @transform_map.type_breadcrumb(possible_types) do
           results = Array.wrap(yield)
-          results << GraphQL::Language::Nodes::Field.new(field_alias: "__typehint", name: "__typename")
+          results << GraphQL::Language::Nodes::Field.new(field_alias: TYPENAME_HINT, name: "__typename")
           results
         end
       else
@@ -124,7 +135,7 @@ module ShopSchemaClient
       next_type = parent_type.get_field(node.name).type.unwrap
 
       selection = if is_reference && is_list
-        @transform_map.add_field_transform(FieldTransform.new("mf_refs", metafield_type: type_name))
+        @transform_map.apply_field_transform(FieldTransform.new("mf_refs", metafield_type: type_name))
         conn_node_type = next_type.get_field("nodes").type.unwrap
         conn_selections = node.selections.map do |conn_node|
           case conn_node.name
@@ -154,13 +165,13 @@ module ShopSchemaClient
           selections: conn_selections,
         )
       elsif is_reference
-        @transform_map.add_field_transform(FieldTransform.new("mf_ref", metafield_type: type_name))
+        @transform_map.apply_field_transform(FieldTransform.new("mf_ref", metafield_type: type_name))
         GraphQL::Language::Nodes::Field.new(
           name: "reference",
           selections: build_metafield_reference(next_type, node.selections),
         )
       else
-        @transform_map.add_field_transform(
+        @transform_map.apply_field_transform(
           FieldTransform.new(
             "mf_val",
             metafield_type: type_name,
@@ -184,13 +195,13 @@ module ShopSchemaClient
       field_name = node.alias || node.name
       case scope_type
       when EXTENSIONS_SCOPE
-        @transform_map.add_field_transform(FieldTransform.new("ex_typename"))
+        @transform_map.apply_field_transform(FieldTransform.new("ex_typename"))
         return GraphQL::Language::Nodes::Field.new(
           field_alias: "#{EXTENSIONS_PREFIX}#{field_name}",
           name: "__typename", # transform parent typename: Product -> ProductExtensions
         )
       when METAOBJECT_SCOPE
-        @transform_map.add_field_transform(FieldTransform.new("mo_typename"))
+        @transform_map.apply_field_transform(FieldTransform.new("mo_typename"))
         return GraphQL::Language::Nodes::Field.new(
           field_alias: field_name,
           name: "type", # transform object type: taco -> TacoMetaobject

@@ -1,12 +1,14 @@
 # shop-schema-client
 
-An experimental client for interfacing with Shopify metafields and metaobjects through a statically-typed schema projection. Try out a working shop schema server in the [example](./example/README.md) folder.
+An experimental client for interfacing with Shopify metafields and metaobjects through a statically-typed reference schema. Try out a working shop schema server in the [example](./example/README.md) folder. This system runs as a client, so could work directly in a web browser if ported to JavaScript.
+
+This is still an early prototype that needs tests and still lacks support for `mixed_reference` and `file_reference` types.
 
 ## How it works
 
-### 1. Compose schema projection
+### 1. Compose a reference schema
 
-A schema projection first loads all metafield and metaobject definitions from the Admin API (see [sample query](./example/server.rb)). Then it loads a base version of the Shopify Admin API, and inserts metafields and metaobjects as native fields and types into that schema using the [`ShopSchemaComposer`](./lib/shop_schema_composer.rb). This creates static definitions for custom elements with naming carefully scoped to avoid conflicts with the base Admin schema, for example:
+A reference schema never _executes_ a request, it simply provides introspection and validation capabilities. This schema is built by loading all metafield and metaobject definitions from the Admin API (see [sample query](./example/server.rb)), then inserting those metaobjects and metafields as native types and fields into a base version of the Shopify Admin API (see [`SchemaComposer`](./lib/schema_composer.rb)). This creates static definitions for custom elements with naming carefully scoped to avoid conflicts with the base Admin schema, for example:
 
 ```graphql
 type Product {
@@ -32,7 +34,7 @@ type TacoMetaobject {
 }
 ```
 
-Now we now have a Shop schema projection that can inform and validate GraphQL queries structured like this:
+Now we now have a Shop reference schema that can inform and validate GraphQL queries structured like this:
 
 ```graphql
 query GetProduct($id: ID!){
@@ -79,7 +81,7 @@ query GetProduct($id: ID!){
 
 ### 2. Transform requests
 
-In order to send the above query to the Shopify Admin API, we need to transform it into a native query structure. The [`RequestTransfomer`](./lib/request_transformer.rb) automates this. The transformed query can be computed once during development, cached, and used repeatedly in production with no request overhead:
+In order to send the above query to the Shopify Admin API, we need to transform it into a native query structure. The [`RequestTransfomer`](./lib/request_transformer.rb) automates this. A transformed query can be computed once during development, cached, and used repeatedly in production with no request overhead:
 
 ```graphql
 query GetProduct($id: ID!) {
@@ -141,7 +143,7 @@ query GetProduct($id: ID!) {
 
 ### 3. Transform responses
 
-Lastly, we need to transform the native query response to match the projected request shape. This is handled by the [`ResponseTransfomer`](./lib/response_transformer.rb), which must run on all responses. It performs a quick in-memory pass making structural changes based on a mapping provided by the request transformer. The transformed results match the original projected request shape:
+Lastly, we need to transform the native query response to match the projected request shape. This is handled by the [`ResponseTransfomer`](./lib/response_transformer.rb), which must run on all responses. It performs a quick in-memory pass making structural changes based on a transfom mapping provided by the request transformer. The transformed results match the original projected request shape:
 
 ```json
 {
@@ -186,11 +188,48 @@ Lastly, we need to transform the native query response to match the projected re
 }
 ```
 
-## Current support
+## Usage
 
-While mostly feature complete, this is still an early prototype. Needs:
+This client operates on the following principles:
 
-- Tests
-- Support for `mixed_reference` metafields
+- Transforming requests requires a shop reference schema (which can take 100ms+ to generate from a cold start). Live requests that require pre-processing should only be done in development mode.
 
-This process is intended to run on a client, so should ultimately be ported to JavaScript. This Ruby prototype riffs off a significant amout of similar code I alredy had written for Ruby GraphQL stitching.
+- Transforming presponses uses a pre-processed transform map, so does NOT require a shop reference schema. This allows request shapes to be pre-processed in development mode, then run with very little overhead in production.
+
+#### Composing a shop schema
+
+See [server example](./example/server.rb). Composition would ideally be done by a Shopify backend, and simply send a shop's reference schema to a client as GraphQL SDL (schema definition language) for it to parse.
+
+#### Making development requests
+
+See [server example](./example/server.rb).
+
+#### Making production requests
+
+While in development mode, generate a shop query and save it as JSON:
+
+```ruby
+query = GraphQL::Query.new(query: "query Fancy($id:ID!){ product(id:$id) { extensions { ... } } }")
+shop_query = ShopSchemaClient::RequestTransformer.new(query).perform
+File.write("my_saved_query.json", shop_query.to_json)
+```
+
+This will save the transformed query and its response transform mapping as a JSON structure:
+
+```json
+{"query":"query {\n  product(id: \"gid://shopify/Product/6885875646486\") {\n    id\n    title\n    __ex_flexRating: metafield(key: \"custom.flex_rating\") {\n      value\n    }\n  }\n}","transforms":{"f":{"product":{"f":{"extensions":{"f":{"flexRating":{"fx":{"do":"mf_val","t":"number_decimal"}}}}},"ex":"extensions"}}}}
+```
+
+In production, load the saved query into a new `ShopQuery`:
+
+```ruby
+json = File.read("my_saved_query.json")
+shop_query = ShopQuery.new(json)
+
+response = shop_query.perform do |query_string|
+  variables = { id: "gid://shopify/Product/1" }
+  do_stuff_to_send_my_request(query_string, variables)
+end
+```
+
+This saved query can be used repeatedly with zero pre-processing overhead, and minimal post-processing.

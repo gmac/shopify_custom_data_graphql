@@ -3,6 +3,8 @@
 module ShopSchemaClient
   class RequestTransformer
     class FieldTransform
+      attr_reader :action, :metafield_type, :selections
+
       def initialize(
         action,
         metafield_type: nil,
@@ -11,6 +13,23 @@ module ShopSchemaClient
         @action = action
         @metafield_type = metafield_type
         @selections = selections
+      end
+
+      def merge(other)
+        if other.nil? || other.action != @action || other.metafield_type != @metafield_type
+          # GraphQL validates overlapping field selections for consistency, so this shouldn't happen.
+          # If it does, it probably means one of a few possibilities:
+          # 1. The query wasn't validated. Run static validatations and return errors.
+          # 2. The query slips through a known bug in GraphQL Ruby's overlapping fields validation,
+          #    see: https://github.com/rmosolgo/graphql-ruby/issues/4403. While Admin API allows this,
+          #    we have to be more strict about it.
+          raise ValidationError, "overlapping field selections must be the same"
+        end
+        if other.selections
+          @selections ||= []
+          @selections.push(*other.selections)
+          @selections.tap(&:uniq!)
+        end
       end
 
       def as_json
@@ -23,16 +42,15 @@ module ShopSchemaClient
     end
 
     class TransformationScope
-      attr_reader :parent, :fields
-      attr_reader :field_transforms, :possible_types
-      attr_accessor :has_extensions
+      attr_reader :parent, :fields, :possible_types
+      attr_accessor :field_transform, :extensions_ns
 
       def initialize(parent = nil)
         @parent = parent
         @possible_types = {}
         @fields = {}
-        @field_transforms = []
-        @has_extensions = false
+        @field_transform = nil
+        @extensions_ns = nil
       end
 
       def as_json
@@ -48,8 +66,8 @@ module ShopSchemaClient
 
         {
           "f" => fields.empty? ? nil : fields,
-          "fx" => field_transforms.empty? ? nil : field_transforms.map(&:as_json).tap(&:uniq!),
-          "ex" => @has_extensions ? true : nil,
+          "fx" => @field_transform&.as_json,
+          "ex" => @extensions_ns,
           "if" => possible_types.empty? ? nil : possible_types,
         }.tap(&:compact!)
       end
@@ -66,8 +84,12 @@ module ShopSchemaClient
         @current_scope.as_json
       end
 
-      def add_field_transform(transform)
-        @current_scope.field_transforms << transform
+      def apply_field_transform(transform)
+        if @current_scope.field_transform
+          @current_scope.field_transform.merge(transform)
+        else
+          @current_scope.field_transform = transform
+        end
       end
 
       def field_breadcrumb(ns)
