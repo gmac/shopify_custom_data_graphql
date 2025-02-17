@@ -39,14 +39,14 @@ module ShopSchemaClient
       end
 
       if (possible_types = current_map["if"])
-        actual_type = object_value[RequentTransformer::TYPENAME_HINT]
+        actual_type = object_value[RequestTransformer::TYPENAME_HINT]
         possible_types.each do |possible_type, next_map|
           next unless possible_type == actual_type || possible_type.split("|").include?(actual_type)
 
           transform_object_scope(object_value, next_map)
         end
 
-        object_value.delete(RequentTransformer::TYPENAME_HINT)
+        object_value.delete(RequestTransformer::TYPENAME_HINT)
       end
 
       object_value
