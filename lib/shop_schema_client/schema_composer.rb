@@ -2,6 +2,7 @@
 
 require_relative "schema_composer/metafield_definition"
 require_relative "schema_composer/metaobject_definition"
+require_relative "schema_composer/metaobject_set"
 require_relative "schema_composer/metaschema_catalog"
 
 module ShopSchemaClient
@@ -21,15 +22,31 @@ module ShopSchemaClient
 
       introspection_names = @base_schema.introspection_system.types.keys
       @schema_types = @base_schema.types.reject! { |k, v| introspection_names.include?(k) }
+      @metaobjects_to_build = {}
     end
 
     def perform
-      @base_schema.possible_types(@schema_types["HasMetafields"]).each do |native_type|
-        build_native_type_extensions(native_type)
+      # GraphQL Ruby `schema.from_definition` has a bug with correct "HasMetafields" types,
+      # see https://github.com/rmosolgo/graphql-ruby/issues/5252
+      ["HasMetafields", "GiftCardTransaction"].each do |interface_name|
+        @base_schema.possible_types(@schema_types[interface_name]).each do |native_type|
+          build_native_type_extensions(native_type)
+        end
       end
 
-      @catalog.metaobject_definitions.each do |metaobject_def|
-        build_metaobject(metaobject_def)
+      while @metaobjects_to_build.any?
+        defs = @metaobjects_to_build
+        @metaobjects_to_build = {}
+        defs.each do |metaobject_str, is_list|
+          type = @schema_types[metaobject_str.typename] || case metaobject_str
+          when MetaobjectDefinition
+            build_metaobject(metaobject_str)
+          when MetaobjectSet
+            build_mixed_metaobject(metaobject_str)
+          end
+
+          build_connection_type(type) if is_list
+        end
       end
 
       builder = self
@@ -67,7 +84,8 @@ module ShopSchemaClient
         type = build_dimension_metatype
         is_list ? type.to_list_type : type
       when "file_reference", "list.file_reference"
-        GraphQL::Schema::BUILT_IN_TYPES["Boolean"] # fixme
+        type = @schema_types["File"]
+        is_list ? build_connection_type(type) : type
       when "id"
         @schema_types["ID"]
       when "json"
@@ -78,16 +96,25 @@ module ShopSchemaClient
         type = @schema_types["Link"]
         is_list ? type.to_list_type : type
       when "metaobject_reference", "list.metaobject_reference"
-        metaobject_def = field_def.metaobject_definition(@catalog)
+        metaobject_def = field_def.linked_metaobject(@catalog)
         if metaobject_def
-          metaobject_name = MetafieldTypeResolver.metaobject_typename(metaobject_def["type"])
-          metaobject_conn_name = MetafieldTypeResolver.connection_typename(metaobject_name)
-          GraphQL::Schema::LateBoundType.new(is_list ? metaobject_conn_name : metaobject_name)
+          @metaobjects_to_build[metaobject_def] ||= is_list
+          GraphQL::Schema::LateBoundType.new(
+            is_list ? MetafieldTypeResolver.connection_typename(metaobject_def.typename) : metaobject_def.typename
+          )
         else
           raise "Invalid metaobject_reference for `#{field_def.key}`"
         end
       when "mixed_reference", "list.mixed_reference"
-        @schema_types["Metaobject"]
+        metaobject_set = field_def.linked_metaobject_set(@catalog)
+        if metaobject_set
+          @metaobjects_to_build[metaobject_set] ||= is_list
+          GraphQL::Schema::LateBoundType.new(
+            is_list ? MetafieldTypeResolver.connection_typename(metaobject_set.typename) : metaobject_set.typename
+          )
+        else
+          raise "Invalid metaobject_references for `#{field_def.key}`"
+        end
       when "money"
         @schema_types["MoneyV2"]
       when "multi_line_text_field"
@@ -134,8 +161,10 @@ module ShopSchemaClient
       metafield_definitions = @catalog.metafields_for_type(native_type.graphql_name)
       return unless metafield_definitions&.any?
 
-      builder = self
       extensions_typename = MetafieldTypeResolver.extensions_typename(native_type.graphql_name)
+      return unless @schema_types[extensions_typename].nil?
+
+      builder = self
       type = @schema_types[extensions_typename] = Class.new(GraphQL::Schema::Object) do
         graphql_name(extensions_typename)
         description("Projected metafield extensions for the #{native_type.graphql_name} type.")
@@ -151,6 +180,28 @@ module ShopSchemaClient
         null: false,
         description: "Projected metafield extensions.",
       )
+    end
+
+    def build_metaobject(metaobject_def)
+      builder = self
+      @schema_types[metaobject_def.typename] ||= Class.new(GraphQL::Schema::Object) do
+        graphql_name(metaobject_def.typename)
+        description(metaobject_def.description)
+        field(:id, builder.schema_types["ID"], null: false)
+
+        metaobject_def.fields.each do |metafield_def|
+          builder.build_object_field(metafield_def, self)
+        end
+      end
+    end
+
+    def build_mixed_metaobject(metaobject_set)
+      builder = self
+      @schema_types[metaobject_set.typename] ||= Class.new(GraphQL::Schema::Union) do
+        graphql_name(metaobject_set.typename)
+        description("A mixed metaobject reference.")
+        possible_types(*metaobject_set.metaobject_definitions.map { builder.build_metaobject(_1) })
+      end
     end
 
     def build_object_field(metafield_def, owner)
@@ -172,25 +223,14 @@ module ShopSchemaClient
       end
     end
 
-    def build_metaobject(metaobject_def)
+    def build_connection_type(base_type)
       builder = self
-      metaobject_typename = MetafieldTypeResolver.metaobject_typename(metaobject_def.type)
-      metaobject_type = @schema_types[metaobject_typename] = Class.new(GraphQL::Schema::Object) do
-        graphql_name(metaobject_typename)
-        description(metaobject_def.description)
-        field(:id, builder.schema_types["ID"], null: false)
-
-        metaobject_def.fields.each do |metafield_def|
-          builder.build_object_field(metafield_def, self)
-        end
-      end
-
-      connection_type_name = MetafieldTypeResolver.connection_typename(metaobject_type.graphql_name)
-      @schema_types[metaobject_type.edge_type.graphql_name] = metaobject_type.edge_type
-      @schema_types[connection_type_name] = Class.new(GraphQL::Schema::Object) do
+      connection_type_name = MetafieldTypeResolver.connection_typename(base_type.graphql_name)
+      @schema_types[base_type.edge_type.graphql_name] ||= base_type.edge_type
+      @schema_types[connection_type_name] ||= Class.new(GraphQL::Schema::Object) do
         graphql_name(connection_type_name)
-        field :edges, metaobject_type.edge_type.to_non_null_type.to_list_type, null: false
-        field :nodes, metaobject_type.to_non_null_type.to_list_type, null: false
+        field :edges, base_type.edge_type.to_non_null_type.to_list_type, null: false
+        field :nodes, base_type.to_non_null_type.to_list_type, null: false
         field :page_info, builder.schema_types["PageInfo"], null: false
       end
     end

@@ -1,10 +1,21 @@
 [
   {
-    "id": "gid://shopify/MetaobjectDefinition/Gizmo",
+    "id": "gid://shopify/MetaobjectDefinition/Widget",
     "description": "",
-    "name": "Gizmo",
-    "type": "gizmo",
+    "name": "Widget",
+    "type": "widget",
     "fieldDefinitions": [
+      {
+        "key": "widget",
+        "description": "",
+        "type": { "name": "metaobject_reference" },
+        "validations": [
+          {
+            "name": "metaobject_definition_id",
+            "value": "gid://shopify/MetaobjectDefinition/Widget"
+          }
+        ]
+      },
       {
         "key": "boolean",
         "description": "",
@@ -163,13 +174,29 @@
         "key": "mixed_reference",
         "description": "",
         "type": { "name": "mixed_reference" },
-        "validations": []
+        "validations": [
+          {
+            "name": "metaobject_definition_ids",
+            "value": [
+              "gid://shopify/MetaobjectDefinition/Taco",
+              "gid://shopify/MetaobjectDefinition/TacoFilling"
+            ]
+          }
+        ]
       },
       {
         "key": "mixed_reference_list",
         "description": "",
         "type": { "name": "list.mixed_reference" },
-        "validations": []
+        "validations": [
+          {
+            "name": "metaobject_definition_ids",
+            "value": [
+              "gid://shopify/MetaobjectDefinition/Taco",
+              "gid://shopify/MetaobjectDefinition/TacoFilling"
+            ]
+          }
+        ]
       },
       {
         "key": "money",
