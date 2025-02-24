@@ -5,6 +5,7 @@ module ShopSchemaClient
     CONNECTION_TYPE_SUFFIX = "Connection"
     EXTENSIONS_TYPE_SUFFIX = "Extensions"
     METAOBJECT_TYPE_SUFFIX = "Metaobject"
+    MIXED_METAOBJECT_TYPE_PREFIX = "MixedMetaobject"
 
     COLOR_TYPENAME = "ColorMetatype"
     DIMENSION_TYPENAME = "DimensionMetatype"
@@ -29,6 +30,10 @@ module ShopSchemaClient
 
       def metaobject_type?(type_name)
         type_name != METAOBJECT_TYPE_SUFFIX && type_name.end_with?(METAOBJECT_TYPE_SUFFIX)
+      end
+
+      def mixed_metaobject_type?(type_name)
+        type_name.start_with?(MIXED_METAOBJECT_TYPE_PREFIX)
       end
 
       def extensions_typename(native_typename)

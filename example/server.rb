@@ -121,7 +121,7 @@ class App
       end
     end
 
-    catalog = ShopSchemaClient::SchemaComposer::MetaschemaCatalog.new
+    catalog = ShopSchemaClient::SchemaComposer::MetatypesCatalog.new
     catalog.add_metaobjects(metaobjects)
     catalog.add_metafields(metafields)
 

@@ -2,8 +2,8 @@
 
 require_relative "schema_composer/metafield_definition"
 require_relative "schema_composer/metaobject_definition"
-require_relative "schema_composer/metaobject_set"
-require_relative "schema_composer/metaschema_catalog"
+require_relative "schema_composer/metaobject_union"
+require_relative "schema_composer/metatypes_catalog"
 
 module ShopSchemaClient
   class SchemaComposer
@@ -26,23 +26,19 @@ module ShopSchemaClient
     end
 
     def perform
-      # GraphQL Ruby `schema.from_definition` has a bug with correct "HasMetafields" types,
-      # see https://github.com/rmosolgo/graphql-ruby/issues/5252
-      ["HasMetafields", "GiftCardTransaction"].each do |interface_name|
-        @base_schema.possible_types(@schema_types[interface_name]).each do |native_type|
-          build_native_type_extensions(native_type)
-        end
+      @base_schema.possible_types(@schema_types["HasMetafields"]).each do |native_type|
+        build_native_type_extensions(native_type)
       end
 
       while @metaobjects_to_build.any?
         defs = @metaobjects_to_build
         @metaobjects_to_build = {}
-        defs.each do |metaobject_str, is_list|
-          type = @schema_types[metaobject_str.typename] || case metaobject_str
+        defs.each do |metaobject_struct, is_list|
+          type = @schema_types[metaobject_struct.typename] || case metaobject_struct
           when MetaobjectDefinition
-            build_metaobject(metaobject_str)
-          when MetaobjectSet
-            build_mixed_metaobject(metaobject_str)
+            build_metaobject(metaobject_struct)
+          when MetaobjectUnion
+            build_mixed_metaobject(metaobject_struct)
           end
 
           build_connection_type(type) if is_list
@@ -51,6 +47,7 @@ module ShopSchemaClient
 
       builder = self
       Class.new(GraphQL::Schema) do
+        use(GraphQL::Schema::Visibility)
         directive(MetafieldDirective)
         add_type_and_traverse(builder.schema_types.values, root: false)
         orphan_types(builder.schema_types.values.select { |t| t.respond_to?(:kind) && t.kind.object? })
@@ -106,7 +103,7 @@ module ShopSchemaClient
           raise "Invalid metaobject_reference for `#{field_def.key}`"
         end
       when "mixed_reference", "list.mixed_reference"
-        metaobject_set = field_def.linked_metaobject_set(@catalog)
+        metaobject_set = field_def.linked_metaobject_union(@catalog)
         if metaobject_set
           @metaobjects_to_build[metaobject_set] ||= is_list
           GraphQL::Schema::LateBoundType.new(
@@ -182,14 +179,23 @@ module ShopSchemaClient
       )
     end
 
+    # these metaobject keys are already restricted by the Shopify backend...
+    RESERVED_METAOBJECT_KEYS = ["id", "handle", "system"].freeze
+
     def build_metaobject(metaobject_def)
       builder = self
       @schema_types[metaobject_def.typename] ||= Class.new(GraphQL::Schema::Object) do
         graphql_name(metaobject_def.typename)
         description(metaobject_def.description)
         field(:id, builder.schema_types["ID"], null: false)
+        field(:handle, builder.schema_types["String"], null: false)
+        # @todo -> make `system` surface the raw Metaobject for access to updatedAt, etc.
 
         metaobject_def.fields.each do |metafield_def|
+          if RESERVED_METAOBJECT_KEYS.include?(metafield_def.key)
+            raise ValidationError, "Metaobject key `#{metafield_def.key}` is reserved for system use"
+          end
+
           builder.build_object_field(metafield_def, self)
         end
       end

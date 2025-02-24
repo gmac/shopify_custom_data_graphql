@@ -35,9 +35,13 @@ module ShopSchemaClient
         catalog.metaobject_by_id(validation["value"]) if validation
       end
 
-      def linked_metaobject_set(catalog)
+      def linked_metaobject_union(catalog)
         validation = validations.find { _1["name"] == "metaobject_definition_ids" }
-        MetaobjectSet.new(validation["value"].map { catalog.metaobject_by_id(_1) }) if validation
+        if validation
+          validation = validation["value"]
+          validation = JSON.parse(validation) if validation.is_a?(String)
+          MetaobjectUnion.new(validation.map { catalog.metaobject_by_id(_1) })
+        end
       end
     end
   end

@@ -2,7 +2,7 @@
 
 module ShopSchemaClient
   class SchemaComposer
-    class MetaobjectSet
+    class MetaobjectUnion
       attr_reader :metaobject_definitions
 
       def initialize(metaobject_defs)
@@ -16,8 +16,8 @@ module ShopSchemaClient
       def typename
         @typename ||= begin
           member_names = @metaobject_definitions.map { MetafieldTypeResolver.metaobject_typename(_1.type) }
-          member_identity = Digest::MD5.hexdigest(member_names.join("/")).slice(0..7)
-          "MixedMetaobject#{member_identity.camelize}"
+          member_identity = Digest::MD5.hexdigest(member_names.join("/")).slice(0..3)
+          "#{MetafieldTypeResolver::MIXED_METAOBJECT_TYPE_PREFIX}#{member_identity.upcase}"
         end
       end
     end

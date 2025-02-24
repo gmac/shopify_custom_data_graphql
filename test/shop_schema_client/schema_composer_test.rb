@@ -37,6 +37,8 @@ describe "SchemaComposer" do
 
   def test_builds_metaobject_types
     type = shop_schema.get_type("TacoMetaobject")
+    assert_equal "ID!", type.get_field("id").type.to_type_signature
+    assert_equal "String!", type.get_field("handle").type.to_type_signature
     assert_equal "String", type.get_field("name").type.to_type_signature
     assert_equal "RatingMetatype", type.get_field("rating").type.to_type_signature
     assert_equal "TacoFillingMetaobject", type.get_field("protein").type.to_type_signature
@@ -251,13 +253,13 @@ describe "SchemaComposer" do
 
   def test_builds_mixed_reference_field
     field = shop_schema.get_type("ProductExtensions").get_field("mixedReference")
-    assert_equal "MixedMetaobject9c798792", field.type.to_type_signature
+    assert_equal "MixedMetaobject9C79", field.type.to_type_signature
     assert_equal "mixed_reference", metafield_directive_type_for(field)
   end
 
   def test_builds_mixed_reference_list_field
     field = shop_schema.get_type("ProductExtensions").get_field("mixedReferenceList")
-    assert_equal "MixedMetaobject9c798792Connection", field.type.to_type_signature
+    assert_equal "MixedMetaobject9C79Connection", field.type.to_type_signature
     assert_equal "list.mixed_reference", metafield_directive_type_for(field)
   end
 
