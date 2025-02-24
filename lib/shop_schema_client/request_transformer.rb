@@ -30,14 +30,6 @@ module ShopSchemaClient
 
     private
 
-    def validate_field_alias(field_alias)
-      if field_alias.start_with?(EXTENSIONS_PREFIX)
-        raise ValidationError, "Field aliases starting with `#{EXTENSIONS_PREFIX}` are reserved for system use."
-      elsif field_alias == TYPENAME_HINT
-        raise ValidationError, "Field alias `#{TYPENAME_HINT}` is reserved for system use."
-      end
-    end
-
     def transform_scope(parent_type, input_selections, scope_type: NATIVE_SCOPE)
       results = input_selections.flat_map do |node|
         case node
@@ -175,7 +167,7 @@ module ShopSchemaClient
           FieldTransform.new(
             "mf_val",
             metafield_type: type_name,
-            selections: extract_value_selections(node.selections).presence,
+            selections: extract_value_object_selection(node.selections).presence,
           )
         )
         GraphQL::Language::Nodes::Field.new(name: "value")
@@ -187,8 +179,26 @@ module ShopSchemaClient
         field_alias: field_alias,
         name: scope_type == EXTENSIONS_SCOPE ? "metafield" : "field",
         arguments: [GraphQL::Language::Nodes::Argument.new(name: "key", value: metafield_key)],
-        selections: [selection],
+        selections: Array.wrap(selection),
       )
+    end
+
+    def build_metafield_reference(reference_type, input_selections)
+      if MetafieldTypeResolver.metaobject_type?(reference_type.graphql_name)
+        [
+          GraphQL::Language::Nodes::InlineFragment.new(
+            type: GraphQL::Language::Nodes::TypeName.new(name: "Metaobject"),
+            selections: transform_scope(reference_type, input_selections, scope_type: METAOBJECT_SCOPE),
+          )
+        ]
+      else
+        [
+          GraphQL::Language::Nodes::InlineFragment.new(
+            type: GraphQL::Language::Nodes::TypeName.new(name: reference_type.graphql_name),
+            selections: transform_scope(reference_type, input_selections),
+          )
+        ]
+      end
     end
 
     def build_typename(node, scope_type:)
@@ -211,38 +221,28 @@ module ShopSchemaClient
       end
     end
 
-    def build_metafield_reference(reference_type, input_selections)
-      if MetafieldTypeResolver.metaobject_type?(reference_type.graphql_name)
-        [
-          GraphQL::Language::Nodes::InlineFragment.new(
-            type: GraphQL::Language::Nodes::TypeName.new(name: "Metaobject"),
-            selections: transform_scope(reference_type, input_selections, scope_type: METAOBJECT_SCOPE),
-          )
-        ]
-      else
-        [
-          GraphQL::Language::Nodes::InlineFragment.new(
-            type: GraphQL::Language::Nodes::TypeName.new(name: reference_type.graphql_name),
-            selections: transform_scope(reference_type, input_selections),
-          )
-        ]
-      end
-    end
-
     # value types (Money, Volume, Dimension) are always concrete,
     # so we can safely traverse fragment selections without type awareness.
-    def extract_value_selections(selections, acc = [])
+    def extract_value_object_selection(selections, acc = [])
       selections.each do |node|
         case node
         when GraphQL::Language::Nodes::Field
           acc << [node.alias, node.name].tap(&:compact!).join(":")
         when GraphQL::Language::Nodes::InlineFragment
-          extract_value_selections(node.selections, acc)
+          extract_value_object_selection(node.selections, acc)
         when GraphQL::Language::Nodes::FragmentSpread
-          extract_value_selections(@query.fragments[node.name].selections, acc)
+          extract_value_object_selection(@query.fragments[node.name].selections, acc)
         end
       end
       acc
+    end
+
+    def validate_field_alias(field_alias)
+      if field_alias.start_with?(EXTENSIONS_PREFIX)
+        raise ValidationError, "Field aliases starting with `#{EXTENSIONS_PREFIX}` are reserved for system use."
+      elsif field_alias == TYPENAME_HINT
+        raise ValidationError, "Field alias `#{TYPENAME_HINT}` is reserved for system use."
+      end
     end
   end
 end

@@ -19,6 +19,10 @@ module ShopSchemaClient
           )
         end
       end
+
+      def typename
+        @typename ||= MetafieldTypeResolver.metaobject_typename(type)
+      end
     end
   end
 end

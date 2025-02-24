@@ -30,9 +30,14 @@ module ShopSchemaClient
         ShopSchemaClient::MetafieldTypeResolver.reference?(type)
       end
 
-      def metaobject_definition(catalog)
+      def linked_metaobject(catalog)
         validation = validations.find { _1["name"] == "metaobject_definition_id" }
         catalog.metaobject_by_id(validation["value"]) if validation
+      end
+
+      def linked_metaobject_set(catalog)
+        validation = validations.find { _1["name"] == "metaobject_definition_ids" }
+        MetaobjectSet.new(validation["value"].map { catalog.metaobject_by_id(_1) }) if validation
       end
     end
   end

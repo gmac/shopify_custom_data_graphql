@@ -59,10 +59,8 @@ describe "SchemaComposer" do
   def test_builds_native_type_extensions_scope_for_all_owner_types
     shop_schema.possible_types(shop_schema.get_type("HasMetafields")).each do |owner_type|
       extensions_field = owner_type.get_field("extensions")
-      puts owner_type.graphql_name if extensions_field.nil?
-      assert false
-      #assert extensions_field, "Expected extensions scope for type `#{owner_type.graphql_name}`."
-      #assert_equal "#{owner_type.graphql_name}Extensions!", extensions_field.type.to_type_signature
+      assert extensions_field, "Expected extensions scope for type `#{owner_type.graphql_name}`."
+      assert_equal "#{owner_type.graphql_name}Extensions!", extensions_field.type.to_type_signature
     end
   end
 
@@ -186,11 +184,15 @@ describe "SchemaComposer" do
   end
 
   def test_builds_file_reference_field
-    skip
+    field = shop_schema.get_type("ProductExtensions").get_field("fileReference")
+    assert_equal "File", field.type.to_type_signature
+    assert_equal "file_reference", metafield_directive_type_for(field)
   end
 
   def test_builds_file_reference_list_field
-    skip
+    field = shop_schema.get_type("ProductExtensions").get_field("fileReferenceList")
+    assert_equal "FileConnection", field.type.to_type_signature
+    assert_equal "list.file_reference", metafield_directive_type_for(field)
   end
 
   def test_builds_id_field
@@ -248,11 +250,15 @@ describe "SchemaComposer" do
   end
 
   def test_builds_mixed_reference_field
-    skip
+    field = shop_schema.get_type("ProductExtensions").get_field("mixedReference")
+    assert_equal "MixedMetaobject9c798792", field.type.to_type_signature
+    assert_equal "mixed_reference", metafield_directive_type_for(field)
   end
 
   def test_builds_mixed_reference_list_field
-    skip
+    field = shop_schema.get_type("ProductExtensions").get_field("mixedReferenceList")
+    assert_equal "MixedMetaobject9c798792Connection", field.type.to_type_signature
+    assert_equal "list.mixed_reference", metafield_directive_type_for(field)
   end
 
   def test_builds_money_field
