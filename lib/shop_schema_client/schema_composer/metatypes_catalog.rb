@@ -2,7 +2,7 @@
 
 module ShopSchemaClient
   class SchemaComposer
-    class MetaschemaCatalog
+    class MetatypesCatalog
       OWNER_TYPES = {
         "CartTransform" => "CARTTRANSFORM",
         "CustomerSegmentMember" => "CUSTOMER",
