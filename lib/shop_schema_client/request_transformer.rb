@@ -5,8 +5,10 @@ require_relative "request_transformer/result"
 
 module ShopSchemaClient
   class RequestTransformer
+    GQL_TYPENAME = "__typename"
     RESERVED_PREFIX = "___"
     TYPENAME_HINT = "#{RESERVED_PREFIX}typehint"
+    EXTENSIONS_SCOPE_TRANSFORM = "extensions_scope"
     EXTENSIONS_SCOPE = :extensions
     METAOBJECT_SCOPE = :metaobject
     NATIVE_SCOPE = :native
@@ -16,6 +18,7 @@ module ShopSchemaClient
       @schema = query.schema
       @transform_map = TransformationMap.new
       @owner_types = @schema.possible_types(@schema.get_type("HasMetafields")).to_set
+      @root_ext_name = MetafieldTypeResolver.extensions_typename(@schema.query.graphql_name)
       @metafield_ns = metafield_ns
       @new_fragments = {}
     end
@@ -39,11 +42,13 @@ module ShopSchemaClient
           end
 
           @transform_map.field_breadcrumb(node) do
-            if scope_type == EXTENSIONS_SCOPE || scope_type == METAOBJECT_SCOPE
+            if scope_type == EXTENSIONS_SCOPE && parent_type.graphql_name == @root_ext_name
+              build_metaobject_query(parent_type, node, scope_ns: scope_ns)
+            elsif scope_type == EXTENSIONS_SCOPE || scope_type == METAOBJECT_SCOPE
               build_metafield(parent_type, node, scope_type: scope_type, scope_ns: scope_ns)
-            elsif scope_type == NATIVE_SCOPE && node.name == "extensions" && @owner_types.include?(parent_type)
+            elsif scope_type == NATIVE_SCOPE && node.name == "extensions" && (parent_type == @schema.query || @owner_types.include?(parent_type))
               next_type = parent_type.get_field(node.name).type.unwrap
-              @transform_map.apply_field_transform(FieldTransform.new("metafield_extensions"))
+              @transform_map.apply_field_transform(FieldTransform.new(EXTENSIONS_SCOPE_TRANSFORM))
               transform_scope(next_type, node.selections, scope_type: EXTENSIONS_SCOPE, scope_ns: node.alias || node.name)
             elsif node.selections&.any?
               next_type = parent_type.get_field(node.name).type.unwrap
@@ -108,7 +113,7 @@ module ShopSchemaClient
       if scope_type == NATIVE_SCOPE && parent_type.kind.abstract? && fragment_type != parent_type
         @transform_map.type_breadcrumb(parent_types & fragment_types) do
           results = Array.wrap(yield)
-          results << GraphQL::Language::Nodes::Field.new(field_alias: TYPENAME_HINT, name: "__typename")
+          results << GraphQL::Language::Nodes::Field.new(field_alias: TYPENAME_HINT, name: GQL_TYPENAME)
           results
         end
       elsif scope_type == METAOBJECT_SCOPE && MetafieldTypeResolver.mixed_metaobject_type?(parent_type.graphql_name)
@@ -122,8 +127,60 @@ module ShopSchemaClient
       end
     end
 
+    def build_connection_selections(conn_type, conn_node)
+      conn_node_type = conn_type.get_field("nodes").type.unwrap
+      conn_node.selections.map do |node|
+        @transform_map.field_breadcrumb(node) do
+          case node.name
+          when "edges"
+            edges_selections = node.selections.map do |n|
+              @transform_map.field_breadcrumb(n) do
+                case n.name
+                when "node"
+                  n.merge(selections: yield(conn_node_type, n.selections))
+                when GQL_TYPENAME
+                  edge_type = conn_type.get_field("edges").type.unwrap
+                  @transform_map.apply_field_transform(FieldTransform.new("static_typename", value: edge_type.graphql_name))
+                  n
+                else
+                  n
+                end
+              end
+            end
+            node.merge(selections: edges_selections)
+          when "nodes"
+            node.merge(selections: yield(conn_node_type, node.selections))
+          when GQL_TYPENAME
+            @transform_map.apply_field_transform(FieldTransform.new("static_typename", value: conn_type.graphql_name))
+            node
+          else
+            node
+          end
+        end
+      end
+    end
+
+    def build_metaobject_query(parent_type, node, scope_ns: nil)
+      return build_typename(parent_type, node, scope_type: EXTENSIONS_SCOPE, scope_ns: scope_ns) if node.name == GQL_TYPENAME
+
+      field = parent_type.get_field(node.name)
+      metaobject_attrs = field.directives.find { _1.graphql_name == "metaobject" }&.arguments&.keyword_arguments
+      return node unless metaobject_attrs
+
+      selections = build_connection_selections(field.type.unwrap, node) do |conn_node_type, conn_node_selections|
+        transform_scope(conn_node_type, conn_node_selections, scope_type: METAOBJECT_SCOPE)
+      end
+
+      GraphQL::Language::Nodes::Field.new(
+        field_alias: "#{RESERVED_PREFIX}#{scope_ns}_#{node.alias || node.name}",
+        name: "metaobjects",
+        arguments: [*node.arguments, GraphQL::Language::Nodes::Argument.new(name: "type", value: metaobject_attrs[:type])],
+        selections: selections,
+      )
+    end
+
     def build_metafield(parent_type, node, scope_type:, scope_ns: nil)
-      return build_typename(node, scope_type: scope_type, scope_ns: scope_ns) if node.name == "__typename"
+      return build_typename(parent_type, node, scope_type: scope_type, scope_ns: scope_ns) if node.name == GQL_TYPENAME
 
       field = parent_type.get_field(node.name)
       metafield_attrs = field.directives.find { _1.graphql_name == "metafield" }&.arguments&.keyword_arguments
@@ -133,43 +190,23 @@ module ShopSchemaClient
       is_list = MetafieldTypeResolver.list?(type_name)
       is_reference = MetafieldTypeResolver.reference?(type_name)
       field_alias = "#{scope_type == EXTENSIONS_SCOPE ? "#{RESERVED_PREFIX}#{scope_ns}_" : ""}#{node.alias || node.name}"
-      next_type = parent_type.get_field(node.name).type.unwrap
 
       selection = if is_reference && is_list
         @transform_map.apply_field_transform(FieldTransform.new(type_name))
-        conn_node_type = next_type.get_field("nodes").type.unwrap
-        conn_selections = node.selections.map do |conn_node|
-          case conn_node.name
-          when "edges"
-            @transform_map.field_breadcrumb(conn_node) do
-              edges_selections = conn_node.selections.map do |n|
-                next n if n.name != "node"
-
-                @transform_map.field_breadcrumb(n) do
-                  n.merge(selections: build_metafield_reference(conn_node_type, n.selections))
-                end
-              end
-              conn_node.merge(selections: edges_selections)
-            end
-          when "nodes"
-            @transform_map.field_breadcrumb(conn_node) do
-              conn_node.merge(selections: build_metafield_reference(conn_node_type, conn_node.selections))
-            end
-          else
-            conn_node
-          end
+        selections = build_connection_selections(field.type.unwrap, node) do |conn_node_type, conn_node_selections|
+          build_metafield_reference(conn_node_type, conn_node_selections)
         end
 
         GraphQL::Language::Nodes::Field.new(
           name: "references",
           arguments: node.arguments,
-          selections: conn_selections,
+          selections: selections,
         )
       elsif is_reference
         @transform_map.apply_field_transform(FieldTransform.new(type_name))
         GraphQL::Language::Nodes::Field.new(
           name: "reference",
-          selections: build_metafield_reference(next_type, node.selections),
+          selections: build_metafield_reference(field.type.unwrap, node.selections),
         )
       else
         @transform_map.apply_field_transform(
@@ -208,14 +245,14 @@ module ShopSchemaClient
       Array.wrap(result)
     end
 
-    def build_typename(node, scope_type:, scope_ns: nil)
+    def build_typename(parent_type, node, scope_type:, scope_ns: nil)
       field_name = node.alias || node.name
       case scope_type
       when EXTENSIONS_SCOPE
-        @transform_map.apply_field_transform(FieldTransform.new("extensions_typename"))
+        @transform_map.apply_field_transform(FieldTransform.new("static_typename", value: parent_type.graphql_name))
         return GraphQL::Language::Nodes::Field.new(
           field_alias: "#{RESERVED_PREFIX}#{scope_ns}_#{field_name}",
-          name: "__typename", # transform parent typename: Product -> ProductExtensions
+          name: GQL_TYPENAME, # transform parent typename: Product -> ProductExtensions
         )
       when METAOBJECT_SCOPE
         @transform_map.apply_field_transform(FieldTransform.new("metaobject_typename"))

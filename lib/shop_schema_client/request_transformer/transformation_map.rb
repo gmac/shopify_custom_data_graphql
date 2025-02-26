@@ -5,9 +5,10 @@ module ShopSchemaClient
     class FieldTransform
       attr_reader :metafield_type, :selections
 
-      def initialize(metafield_type, selections: nil)
+      def initialize(metafield_type, selections: nil, value: nil)
         @metafield_type = metafield_type
         @selections = selections
+        @value = value
       end
 
       def merge(other)
@@ -31,6 +32,7 @@ module ShopSchemaClient
         {
           "t" => @metafield_type,
           "s" => @selections,
+          "v" => @value,
         }.tap(&:compact!)
       end
     end
@@ -48,7 +50,7 @@ module ShopSchemaClient
       end
 
       def map_all_fields?
-        @map_all_fields || @parent&.map_all_fields?
+        @map_all_fields || @parent&.map_all_fields? || false
       end
 
       def merge(scope)
@@ -72,9 +74,11 @@ module ShopSchemaClient
       end
 
       def as_json
+        map_all_fields = map_all_fields?
+
         fields = @fields.each_with_object({}) do |(k, v), m|
           info = v.as_json
-          m[k] = info if map_all_fields? || !info.empty?
+          m[k] = info if map_all_fields || !info.empty?
         end
 
         possible_types = @possible_types.each_with_object({}) do |(k, v), m|
@@ -83,8 +87,8 @@ module ShopSchemaClient
         end
 
         {
-          "f" => fields.empty? ? nil : fields,
           "fx" => @field_transform&.as_json,
+          "f" => fields.empty? ? nil : fields,
           "if" => possible_types.empty? ? nil : possible_types,
         }.tap(&:compact!)
       end

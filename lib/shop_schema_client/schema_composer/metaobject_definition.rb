@@ -23,6 +23,10 @@ module ShopSchemaClient
       def typename
         @typename ||= MetafieldTypeResolver.metaobject_typename(type)
       end
+
+      def connection_field
+        @connection_field ||= typename.camelize(:lower).pluralize
+      end
     end
   end
 end

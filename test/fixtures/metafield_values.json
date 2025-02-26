@@ -1,0 +1,311 @@
+{
+  "boolean": {
+    "jsonValue": true,
+    "reference": null,
+    "references": null
+  },
+  "color": {
+    "jsonValue": "#ff0000",
+    "reference": null,
+    "references": null
+  },
+  "list.color": {
+    "jsonValue": ["#ff0000", "#0000ff"],
+    "reference": null,
+    "references": null
+  },
+  "date": {
+    "jsonValue": "2025-02-26",
+    "reference": null,
+    "references": null
+  },
+  "list.date": {
+    "jsonValue": ["2025-02-26", "2025-02-27"],
+    "reference": null,
+    "references": null
+  },
+  "date_time": {
+    "jsonValue": "2025-02-27T02:00:00Z",
+    "reference": null,
+    "references": null
+  },
+  "list.date_time": {
+    "jsonValue": [
+      "2025-02-27T02:00:00Z",
+      "2025-02-28T02:00:00Z"
+    ],
+    "reference": null,
+    "references": null
+  },
+  "dimension": {
+    "jsonValue": {
+      "value": 23.0,
+      "unit": "INCHES"
+    },
+    "reference": null,
+    "references": null
+  },
+  "list.dimension": {
+    "jsonValue": [
+      {
+        "value": 1.0,
+        "unit": "in"
+      },
+      {
+        "value": 2.0,
+        "unit": "in"
+      }
+    ],
+    "reference": null,
+    "references": null
+  },
+  "id": {
+    "jsonValue": "r2d2c3p0",
+    "reference": null,
+    "references": null
+  },
+  "json": {
+    "jsonValue": {
+      "hello": "world"
+    },
+    "reference": null,
+    "references": null
+  },
+  "link": {
+    "jsonValue": {
+      "text": "Shopify",
+      "url": "https://shopify.com"
+    },
+    "reference": null,
+    "references": null
+  },
+  "list.link": {
+    "jsonValue": [
+      {
+        "text": "Shopify",
+        "url": "https://shopify.com"
+      },
+      {
+        "text": "Shopify.dev",
+        "url": "https://shopify.dev"
+      }
+    ],
+    "reference": null,
+    "references": null
+  },
+  "metaobject_reference": {
+    "jsonValue": "gid://shopify/Metaobject/38043670",
+    "reference": {
+      "id": "gid://shopify/Metaobject/38043670"
+    },
+    "references": null
+  },
+  "list.metaobject_reference": {
+    "jsonValue": [
+      "gid://shopify/Metaobject/38043670",
+      "gid://shopify/Metaobject/38109206"
+    ],
+    "reference": null,
+    "references": {
+      "nodes": [
+        {
+          "id": "gid://shopify/Metaobject/38043670"
+        }
+      ]
+    }
+  },
+  "mixed_reference": {
+    "jsonValue": "gid://shopify/Metaobject/37814294",
+    "reference": {
+      "id": "gid://shopify/Metaobject/37814294"
+    },
+    "references": null
+  },
+  "list.mixed_reference": {
+    "jsonValue": [
+      "gid://shopify/Metaobject/37814294",
+      "gid://shopify/Metaobject/38043670"
+    ],
+    "reference": null,
+    "references": {
+      "nodes": [
+        {
+          "id": "gid://shopify/Metaobject/37814294"
+        }
+      ]
+    }
+  },
+  "money": {
+    "jsonValue": {
+      "amount": "23.0",
+      "currency_code": "USD"
+    },
+    "reference": null,
+    "references": null
+  },
+  "multi_line_text_field": {
+    "jsonValue": "hello world",
+    "reference": null,
+    "references": null
+  },
+  "number_decimal": {
+    "jsonValue": "23.5",
+    "reference": null,
+    "references": null
+  },
+  "list.number_decimal": {
+    "jsonValue": ["1.1", "2.2", "3.3"],
+    "reference": null,
+    "references": null
+  },
+  "number_integer": {
+    "jsonValue": 23,
+    "reference": null,
+    "references": null
+  },
+  "list.number_integer": {
+    "jsonValue": [1, 2, 3],
+    "reference": null,
+    "references": null
+  },
+  "product_reference": {
+    "jsonValue": "gid://shopify/Product/6561850556438",
+    "reference": {
+      "id": "gid://shopify/Product/6561850556438"
+    },
+    "references": null
+  },
+  "list.product_reference": {
+    "jsonValue": [
+      "gid://shopify/Product/6885875646486",
+      "gid://shopify/Product/6561850556438"
+    ],
+    "reference": null,
+    "references": {
+      "nodes": [
+        {
+          "id": "gid://shopify/Product/6885875646486"
+        }
+      ]
+    }
+  },
+  "rating": {
+    "jsonValue": {
+      "scale_min": "1.0",
+      "scale_max": "5.0",
+      "value": "2.0"
+    },
+    "reference": null,
+    "references": null
+  },
+  "list.rating": {
+    "jsonValue": [
+      {
+        "scale_min": "1.0",
+        "scale_max": "5.0",
+        "value": "1.0"
+      },
+      {
+        "scale_min": "1.0",
+        "scale_max": "5.0",
+        "value": "2.0"
+      }
+    ],
+    "reference": null,
+    "references": null
+  },
+  "rich_text_field": {
+    "jsonValue": {
+      "type": "root",
+      "children": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "value": "hello "
+            },
+            {
+              "type": "text",
+              "value": "world",
+              "bold": true
+            },
+            {
+              "type": "text",
+              "value": "."
+            }
+          ]
+        }
+      ]
+    },
+    "reference": null,
+    "references": null
+  },
+  "single_line_text_field": {
+    "jsonValue": "hello world",
+    "reference": null,
+    "references": null
+  },
+  "list.single_line_text_field": {
+    "jsonValue": ["alpha", "bravo"],
+    "reference": null,
+    "references": null
+  },
+  "url": {
+    "jsonValue": "https://shopify.com",
+    "reference": null,
+    "references": null
+  },
+  "list.url": {
+    "jsonValue": [
+      "https://shopify.com",
+      "https://shopify.dev"
+    ],
+    "reference": null,
+    "references": null
+  },
+  "volume": {
+    "jsonValue": {
+      "value": 23.0,
+      "unit": "FLUID_OUNCES"
+    },
+    "reference": null,
+    "references": null
+  },
+  "list.volume": {
+    "jsonValue": [
+      {
+        "value": 1.0,
+        "unit": "us_fl_oz"
+      },
+      {
+        "value": 2.0,
+        "unit": "us_fl_oz"
+      }
+    ],
+    "reference": null,
+    "references": null
+  },
+  "weight": {
+    "jsonValue": {
+      "value": 23.0,
+      "unit": "POUNDS"
+    },
+    "reference": null,
+    "references": null
+  },
+  "list.weight": {
+    "jsonValue": [
+      {
+        "value": 1.0,
+        "unit": "oz"
+      },
+      {
+        "value": 2.0,
+        "unit": "oz"
+      }
+    ],
+    "reference": null,
+    "references": null
+  }
+}

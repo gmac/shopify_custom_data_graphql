@@ -20,14 +20,14 @@ module ShopSchemaClient
         fields.each do |field_name, next_map|
           field_transform = next_map["fx"]
 
-          if field_transform && field_transform["t"] == "metafield_extensions"
+          if field_transform && field_transform["t"] == RequestTransformer::EXTENSIONS_SCOPE_TRANSFORM
             expand_extensions(object_value, field_name)
           end
 
           next_value = object_value[field_name]
           next if next_value.nil?
 
-          if field_transform && field_transform["t"] != "metafield_extensions"
+          if field_transform && field_transform["t"] != RequestTransformer::EXTENSIONS_SCOPE_TRANSFORM
             next_value = object_value[field_name] = transform_field_value(next_value, field_transform)
           end
 
@@ -68,10 +68,10 @@ module ShopSchemaClient
     def transform_field_value(field_value, transform)
       metafield_type = transform["t"]
       case metafield_type
+      when "static_typename"
+        transform["v"]
       when "metaobject_typename"
         MetafieldTypeResolver.metaobject_typename(field_value)
-      when "extensions_typename"
-        MetafieldTypeResolver.extensions_typename(field_value)
       else
         MetafieldTypeResolver.resolve(metafield_type, field_value, transform["s"])
       end
