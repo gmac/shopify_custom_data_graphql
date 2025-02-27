@@ -97,22 +97,18 @@ module ShopSchemaClient
         case type_name
         when "boolean"
           value == true
-        when "color", "list.color", "date", "list.date", "date_time", "list.date_time"
-          value
         when "dimension"
           unit_value_with_selections(value, selections, DIMENSION_TYPENAME)
         when "list.dimension"
           value.map! { unit_value_with_selections(_1, selections, DIMENSION_TYPENAME) }
-        when "id", "json"
-          value
         when "language"
           value.upcase
-        when "link", "list.link"
-          value
+        when "link"
+          link_with_selections(value, selections)
+        when "list.link"
+          value.map! { link_with_selections(_1, selections) }
         when "money"
           money_with_selections(value, selections)
-        when "multi_line_text_field"
-          value
         when "number_decimal"
           Float(value)
         when "list.number_decimal"
@@ -125,8 +121,6 @@ module ShopSchemaClient
           rating_with_selections(value, selections)
         when "list.rating"
           value.map! { rating_with_selections(_1, selections) }
-        when "rich_text_field", "single_line_text_field", "list.single_line_text_field", "url", "list.url"
-          value
         when "volume"
           unit_value_with_selections(value, selections, VOLUME_TYPENAME)
         when "list.volume"
@@ -136,9 +130,11 @@ module ShopSchemaClient
         when "list.weight"
           value.map! { unit_value_with_selections(_1, selections, WEIGHT_TYPENAME) }
         else
-          raise "Unknown metafield type `#{metafield_type}`"
+          value
         end
       end
+
+      private
 
       def unit_value_with_selections(obj, selections, type_name)
         selections.each_with_object({}) do |sel, memo|
@@ -151,6 +147,20 @@ module ShopSchemaClient
             memo[field_name] = Float(obj["value"])
           when "__typename"
             memo[field_name] = type_name
+          end
+        end
+      end
+
+      def link_with_selections(obj, selections)
+        selections.each_with_object({}) do |sel, memo|
+          field_name, node_name = selection_alias_and_field(sel)
+          case node_name
+          when "label"
+            memo[field_name] = obj["text"]
+          when "url"
+            memo[field_name] = obj["url"]
+          when "__typename"
+            memo[field_name] = "Link"
           end
         end
       end

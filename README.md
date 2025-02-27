@@ -34,7 +34,7 @@ type TacoMetaobject {
 }
 ```
 
-Now we now have a Shop reference schema that can inform and validate GraphQL queries structured like this:
+Now we now have a Shop reference schema that can introspect and validate GraphQL queries structured like this:
 
 ```graphql
 query GetProduct($id: ID!){
@@ -43,7 +43,6 @@ query GetProduct($id: ID!){
     title
     extensions {
       # These are all metafields...!!
-      flexRating # number_decimal
       similarProduct { # product_reference
         id
         title
@@ -52,7 +51,7 @@ query GetProduct($id: ID!){
         # This is a metaobject...!!
         name
         rating { # rating
-          min
+          max
           value
           __typename
         }
@@ -61,16 +60,12 @@ query GetProduct($id: ID!){
           volume { # volume
             value
             unit
-            __typename
           }
         }
         toppings(first: 10) { # list.metaobject_reference
           nodes {
             name
-            volume {
-              value
-              unit
-            }
+            calories # number_integer
           }
         }
       }
@@ -81,17 +76,14 @@ query GetProduct($id: ID!){
 
 ### 2. Transform requests
 
-In order to send the above query to the Shopify Admin API, we need to transform it into a native query structure. The [`RequestTransfomer`](./lib/request_transformer.rb) automates this. A transformed query can be computed once during development, cached, and used repeatedly in production with no request overhead:
+In order to send the above query to the Shopify Admin API, we need to transform it into a native query structure. The [`RequestTransfomer`](./lib/request_transformer.rb) automates this:
 
 ```graphql
 query GetProduct($id: ID!) {
   product(id: $id) {
     id
     title
-    __extensions__flexRating: metafield(key: "custom.flex_rating") {
-      value
-    }
-    __extensions__similarProduct: metafield(key: "custom.similar_product") {
+    ___extensions_similarProduct: metafield(key: "custom.similar_product") {
       reference {
         ... on Product {
           id
@@ -99,24 +91,16 @@ query GetProduct($id: ID!) {
         }
       }
     }
-    __extensions__myTaco: metafield(key: "custom.taco_pairing") {
+    ___extensions_myTaco: metafield(key: "custom.taco_pairing") {
       reference {
         ... on Metaobject {
-          name: field(key: "name") {
-            value
-          }
-          rating: field(key: "rating") {
-            value
-          }
+          name: field(key: "name") { jsonValue }
+          rating: field(key: "rating") { jsonValue }
           protein: field(key: "protein") {
             reference {
               ... on Metaobject {
-                name: field(key: "name") {
-                  value
-                }
-                volume: field(key: "volume") {
-                  value
-                }
+                name: field(key: "name") { jsonValue }
+                volume: field(key: "volume") { jsonValue }
               }
             }
           }
@@ -124,11 +108,61 @@ query GetProduct($id: ID!) {
             references(first: 10) {
               nodes {
                 ... on Metaobject {
-                  name: field(key: "name") {
-                    value
+                  name: field(key: "name") { jsonValue }
+                  calories: field(key: "calories") { jsonValue }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+While transforming the request shape, a small JSON mapping is also generated to describe transformations needed in the response data:
+
+```json
+{
+  "f": {
+    "product": {
+      "f": {
+        "extensions": {
+          "fx": { "t": "extensions_scope" },
+          "f": {
+            "similarProduct": {
+              "fx": { "t": "product_reference" }
+            },
+            "myTaco": {
+              "fx": { "t": "metaobject_reference" },
+              "f": {
+                "name": {
+                  "fx": { "t": "single_line_text_field" }
+                },
+                "rating": {
+                  "fx": { "t": "rating", "s": ["max", "value", "__typename"] }
+                },
+                "protein": {
+                  "fx": { "t": "metaobject_reference" },
+                  "f": {
+                    "name": {
+                      "fx": { "t": "single_line_text_field" }
+                    },
+                    "volume": {
+                      "fx": { "t": "volume", "s": ["unit", "value"] }
+                    }
                   }
-                  volume: field(key: "volume") {
-                    value
+                },
+                "toppings": {
+                  "fx": { "t": "list.metaobject_reference" },
+                  "f": {
+                    "name": {
+                      "fx": { "t": "single_line_text_field" }
+                    },
+                    "calories": {
+                      "fx": { "t": "number_integer" }
+                    }
                   }
                 }
               }
@@ -141,9 +175,11 @@ query GetProduct($id: ID!) {
 }
 ```
 
+With these transformation artifacts, a query can be computed once during development, cached, and used repeatedly in production without further dependence on the shop reference schema.
+
 ### 3. Transform responses
 
-Lastly, we need to transform the native query response to match the projected request shape. This is handled by the [`ResponseTransfomer`](./lib/response_transformer.rb), which must run on all responses. It performs a quick in-memory pass making structural changes based on a transfom mapping provided by the request transformer. The transformed results match the original projected request shape:
+Lastly, the [`ResponseTransfomer`](./lib/response_transformer.rb) must run on all responses, and uses the transformation mapping to shape results to match the original request. This is a quick in-memory pass that adds modest transformation overhead to cached requests:
 
 ```json
 {
@@ -151,7 +187,6 @@ Lastly, we need to transform the native query response to match the projected re
     "id": "gid://shopify/Product/6885875646486",
     "title": "Neptune Discovery Lab",
     "extensions": {
-      "flexRating": 1.5,
       "similarProduct": {
         "id": "gid://shopify/Product/6561850556438",
         "title": "Aquanauts Crystal Explorer Sub"
@@ -167,18 +202,14 @@ Lastly, we need to transform the native query response to match the projected re
           "name": "Pineapple",
           "volume": {
             "value": 2,
-            "unit": "MILLILITERS",
-            "__typename": "VolumeMetatype"
+            "unit": "OUNCES"
           }
         },
         "toppings": {
           "nodes": [
             {
               "name": "Pineapple",
-              "volume": {
-                "value": 2,
-                "unit": "MILLILITERS"
-              }
+              "calories": 25
             }
           ]
         }

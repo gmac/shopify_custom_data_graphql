@@ -3,6 +3,48 @@
 require "test_helper"
 
 describe "MetafieldTypeResolver" do
+  MetafieldTypeResolver = ShopSchemaClient::MetafieldTypeResolver
+
+  def test_formats_extension_names
+    assert_equal "ProductExtensions", MetafieldTypeResolver.extensions_typename("Product")
+  end
+
+  def test_identifies_extension_names
+    assert_equal true, MetafieldTypeResolver.extensions_type?("ProductExtensions")
+    assert_equal false, MetafieldTypeResolver.extensions_type?("Product")
+  end
+
+  def test_formats_metaobject_names
+    assert_equal "TacoFillingMetaobject", MetafieldTypeResolver.metaobject_typename("taco_filling")
+  end
+
+  def test_identifies_metaobject_names
+    assert_equal true, MetafieldTypeResolver.metaobject_type?("TacoMetaobject")
+    assert_equal false, MetafieldTypeResolver.metaobject_type?("Metaobject")
+    assert_equal false, MetafieldTypeResolver.metaobject_type?("Product")
+  end
+
+  def test_formats_connection_names
+    assert_equal "TacoConnection", MetafieldTypeResolver.connection_typename("Taco")
+  end
+
+  def test_identifies_connection_names
+    assert_equal true, MetafieldTypeResolver.connection_type?("TacoConnection")
+    assert_equal false, MetafieldTypeResolver.connection_type?("TacoMetaobject")
+  end
+
+  def test_identifies_list_types
+    assert_equal true, MetafieldTypeResolver.list?("list.metaobject_reference")
+    assert_equal true, MetafieldTypeResolver.list?("list.color")
+    assert_equal false, MetafieldTypeResolver.list?("color")
+  end
+
+  def test_identifies_reference_types
+    assert_equal true, MetafieldTypeResolver.reference?("metaobject_reference")
+    assert_equal true, MetafieldTypeResolver.reference?("list.metaobject_reference")
+    assert_equal false, MetafieldTypeResolver.reference?("color")
+  end
+
   def test_resolves_boolean
     assert_equal true, resolve_fixture("boolean")
   end
@@ -13,6 +55,51 @@ describe "MetafieldTypeResolver" do
 
   def test_resolves_color_list
     assert_equal ["#ff0000", "#0000ff"], resolve_fixture("list.color")
+  end
+
+  def test_resolves_collection_reference
+    expected = { "id" => "gid://shopify/Collection/1" }
+    assert_equal expected, resolve_fixture("collection_reference")
+  end
+
+  def test_resolves_collection_reference_list
+    expected = {
+      "nodes" => [
+        { "id" => "gid://shopify/Collection/1" },
+        { "id" => "gid://shopify/Collection/2" },
+      ],
+    }
+    assert_equal expected, resolve_fixture("list.collection_reference")
+  end
+
+  def test_resolves_company_reference
+    expected = { "id" => "gid://shopify/Company/1" }
+    assert_equal expected, resolve_fixture("company_reference")
+  end
+
+  def test_resolves_company_reference_list
+    expected = {
+      "nodes" => [
+        { "id" => "gid://shopify/Company/1" },
+        { "id" => "gid://shopify/Company/2" },
+      ],
+    }
+    assert_equal expected, resolve_fixture("list.company_reference")
+  end
+
+  def test_resolves_customer_reference
+    expected = { "id" => "gid://shopify/Customer/1" }
+    assert_equal expected, resolve_fixture("customer_reference")
+  end
+
+  def test_resolves_customer_reference_list
+    expected = {
+      "nodes" => [
+        { "id" => "gid://shopify/Customer/1" },
+        { "id" => "gid://shopify/Customer/2" },
+      ],
+    }
+    assert_equal expected, resolve_fixture("list.customer_reference")
   end
 
   def test_resolves_date
@@ -55,6 +142,21 @@ describe "MetafieldTypeResolver" do
     assert_equal expected, resolve_fixture("dimension", ["u:unit", "v:value", "__typename"])
   end
 
+  def test_resolves_file_reference
+    expected = { "id" => "gid://shopify/File/1" }
+    assert_equal expected, resolve_fixture("file_reference")
+  end
+
+  def test_resolves_file_reference_list
+    expected = {
+      "nodes" => [
+        { "id" => "gid://shopify/File/1" },
+        { "id" => "gid://shopify/File/2" },
+      ],
+    }
+    assert_equal expected, resolve_fixture("list.file_reference")
+  end
+
   def test_resolves_id
     assert_equal "r2d2-c3p0", resolve_fixture("id")
   end
@@ -64,11 +166,21 @@ describe "MetafieldTypeResolver" do
   end
 
   def test_resolves_link
-    skip
+    expected = { "label" => "Shopify", "url" => "https://shopify.com" }
+    assert_equal expected, resolve_fixture("link", ["label", "url"])
   end
 
   def test_resolves_link_list
-    skip
+    expected = [
+      { "label" => "Shopify", "url" => "https://shopify.com" },
+      { "label" => "Shopify.dev", "url" => "https://shopify.dev" },
+    ]
+    assert_equal expected, resolve_fixture("list.link", ["label", "url"])
+  end
+
+  def test_resolves_link_with_aliases_and_typename
+    expected = { "l" => "Shopify", "u" => "https://shopify.com", "__typename" => "Link" }
+    assert_equal expected, resolve_fixture("link", ["l:label", "u:url", "__typename"])
   end
 
   def test_resolves_metaobject_reference
@@ -124,6 +236,26 @@ describe "MetafieldTypeResolver" do
     assert_equal [1, 2, 3], resolve_fixture("list.number_integer")
   end
 
+  def test_resolves_order_reference
+    expected = { "id" => "gid://shopify/Order/1" }
+    assert_equal expected, resolve_fixture("order_reference")
+  end
+
+  def test_resolves_page_reference
+    expected = { "id" => "gid://shopify/Page/1" }
+    assert_equal expected, resolve_fixture("page_reference")
+  end
+
+  def test_resolves_page_reference_list
+    expected = {
+      "nodes" => [
+        { "id" => "gid://shopify/Page/1" },
+        { "id" => "gid://shopify/Page/2" },
+      ],
+    }
+    assert_equal expected, resolve_fixture("list.page_reference")
+  end
+
   def test_resolves_product_reference
     expected = { "id" => "gid://shopify/Product/1" }
     assert_equal expected, resolve_fixture("product_reference")
@@ -137,6 +269,21 @@ describe "MetafieldTypeResolver" do
       ],
     }
     assert_equal expected, resolve_fixture("list.product_reference")
+  end
+
+  def test_resolves_product_taxonomy_value_reference
+    expected = { "id" => "gid://shopify/TaxonomyValue/1" }
+    assert_equal expected, resolve_fixture("product_taxonomy_value_reference")
+  end
+
+  def test_resolves_product_taxonomy_value_reference_list
+    expected = {
+      "nodes" => [
+        { "id" => "gid://shopify/TaxonomyValue/1" },
+        { "id" => "gid://shopify/TaxonomyValue/2" },
+      ],
+    }
+    assert_equal expected, resolve_fixture("list.product_taxonomy_value_reference")
   end
 
   def test_resolves_rating
@@ -175,6 +322,21 @@ describe "MetafieldTypeResolver" do
 
   def test_resolves_url_list
     assert_equal ["https://shopify.com", "https://shopify.dev"], resolve_fixture("list.url")
+  end
+
+  def test_resolves_variant_reference
+    expected = { "id" => "gid://shopify/ProductVariant/1" }
+    assert_equal expected, resolve_fixture("variant_reference")
+  end
+
+  def test_resolves_variant_reference_list
+    expected = {
+      "nodes" => [
+        { "id" => "gid://shopify/ProductVariant/1" },
+        { "id" => "gid://shopify/ProductVariant/2" },
+      ],
+    }
+    assert_equal expected, resolve_fixture("list.variant_reference")
   end
 
   def test_resolves_volume
@@ -228,7 +390,7 @@ describe "MetafieldTypeResolver" do
   private
 
   def resolve_fixture(metafield_type, selections = nil)
-    ShopSchemaClient::MetafieldTypeResolver.resolve(
+    MetafieldTypeResolver.resolve(
       metafield_type,
       metafield_values[metafield_type],
       selections,
