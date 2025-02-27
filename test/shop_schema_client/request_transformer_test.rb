@@ -17,8 +17,8 @@ describe "RequestTransformer" do
     expected_query = %|query {
       product(id: "1") {
         title
-        ___extensions_boolean: metafield(key: "custom.boolean") { value }
-        ___extensions_color: metafield(key: "custom.color") { value }
+        ___extensions_boolean: metafield(key: "custom.boolean") { jsonValue }
+        ___extensions_color: metafield(key: "custom.color") { jsonValue }
       }
     }|
 
@@ -52,8 +52,8 @@ describe "RequestTransformer" do
     expected_query = %|query {
       product(id: "1") {
         title
-        ___extensions_dimension: metafield(key: "custom.dimension") { value }
-        ___extensions_rating: metafield(key: "custom.rating") { value }
+        ___extensions_dimension: metafield(key: "custom.dimension") { jsonValue }
+        ___extensions_rating: metafield(key: "custom.rating") { jsonValue }
       }
     }|
 
@@ -212,8 +212,8 @@ describe "RequestTransformer" do
           reference {
             ... on Product {
               title
-              ___extensions_boolean: metafield(key: "custom.boolean") { value }
-              ___extensions_color: metafield(key: "custom.color") { value }
+              ___extensions_boolean: metafield(key: "custom.boolean") { jsonValue }
+              ___extensions_color: metafield(key: "custom.color") { jsonValue }
             }
           }
         }
@@ -263,9 +263,9 @@ describe "RequestTransformer" do
     expected_query = %|query {
       product(id: "1") {
         title
-        ___extensions1_myBoolean: metafield(key: "custom.boolean") { value }
+        ___extensions1_myBoolean: metafield(key: "custom.boolean") { jsonValue }
         ___extensions1_myTypename: __typename
-        ___extensions2_myColor: metafield(key: "custom.color") { value }
+        ___extensions2_myColor: metafield(key: "custom.color") { jsonValue }
       }
     }|
 
@@ -318,8 +318,8 @@ describe "RequestTransformer" do
         ___extensions_widget: metafield(key: "custom.widget") {
           reference {
             ... on Metaobject {
-              boolean: field(key: "boolean") { value }
-              color: field(key: "color") { value }
+              boolean: field(key: "boolean") { jsonValue }
+              color: field(key: "color") { jsonValue }
             }
           }
         }
@@ -364,8 +364,8 @@ describe "RequestTransformer" do
         ___extensions_widget: metafield(key: "custom.widget") {
           reference {
             ... on Metaobject {
-              dimension: field(key: "dimension") { value }
-              rating: field(key: "rating") { value }
+              dimension: field(key: "dimension") { jsonValue }
+              rating: field(key: "rating") { jsonValue }
             }
           }
         }
@@ -560,8 +560,8 @@ describe "RequestTransformer" do
               widget: field(key: "widget") {
                 reference {
                   ... on Metaobject {
-                    boolean: field(key: "boolean") { value }
-                    color: field(key: "color") { value }
+                    boolean: field(key: "boolean") { jsonValue }
+                    color: field(key: "color") { jsonValue }
                   }
                 }
               }
@@ -615,8 +615,8 @@ describe "RequestTransformer" do
         ___extensions_widget: metafield(key: "custom.widget") {
           reference {
             ... on Metaobject {
-              myBoolean: field(key: "boolean") { value }
-              myColor: field(key: "color") { value }
+              myBoolean: field(key: "boolean") { jsonValue }
+              myColor: field(key: "color") { jsonValue }
               myTypename: type
             }
           }
@@ -666,7 +666,7 @@ describe "RequestTransformer" do
             ... on Metaobject {
               id
               handle
-              boolean: field(key: "boolean") { value }
+              boolean: field(key: "boolean") { jsonValue }
             }
           }
         }
@@ -710,8 +710,8 @@ describe "RequestTransformer" do
 
     expected_query = %|query {
       product(id: "1") {
-        ___extensions_rating: metafield(key: "custom.rating") { value }
-        ___extensions_rating: metafield(key: "custom.rating") { value }
+        ___extensions_rating: metafield(key: "custom.rating") { jsonValue }
+        ___extensions_rating: metafield(key: "custom.rating") { jsonValue }
       }
     }|
 
@@ -756,8 +756,8 @@ describe "RequestTransformer" do
 
     expected_query = %|query {
       product(id: "1") {
-        ___extensions_rating1: metafield(key: "custom.rating") { value }
-        ___extensions_rating2: metafield(key: "custom.rating") { value }
+        ___extensions_rating1: metafield(key: "custom.rating") { jsonValue }
+        ___extensions_rating2: metafield(key: "custom.rating") { jsonValue }
       }
     }|
 
@@ -791,12 +791,12 @@ describe "RequestTransformer" do
 
     expected_query = %|query {
       product(id: "1") {
-        ___extensions_boolean: metafield(key: "custom.boolean") { value }
+        ___extensions_boolean: metafield(key: "custom.boolean") { jsonValue }
         ...ProductExtensionsAttrs
       }
     }
     fragment ProductExtensionsAttrs on Product {
-      ___extensions_color: metafield(key: "custom.color") { value }
+      ___extensions_color: metafield(key: "custom.color") { jsonValue }
     }|
 
     expected_transforms = {
@@ -835,11 +835,11 @@ describe "RequestTransformer" do
         ... on Node { id }
         ... on Product {
           title
-          ___productExt_boolean: metafield(key: "custom.boolean") { value }
+          ___productExt_boolean: metafield(key: "custom.boolean") { jsonValue }
         }
         ... on ProductVariant {
           title
-          ___variantExt_test: metafield(key: "custom.test") { value }
+          ___variantExt_test: metafield(key: "custom.test") { jsonValue }
         }
         ___typehint: __typename
       }
@@ -903,11 +903,11 @@ describe "RequestTransformer" do
     }
     fragment ProductAttrs on Product {
       title
-      ___productExt_boolean: metafield(key: "custom.boolean") { value }
+      ___productExt_boolean: metafield(key: "custom.boolean") { jsonValue }
     }
     fragment VariantAttrs on ProductVariant {
       title
-      ___variantExt_test: metafield(key: "custom.test") { value }
+      ___variantExt_test: metafield(key: "custom.test") { jsonValue }
     }|
 
     expected_transforms = {
@@ -961,11 +961,11 @@ describe "RequestTransformer" do
             ... on Metaobject {
               ... on Metaobject {
                 id
-                name: field(key: "name") { value }
+                name: field(key: "name") { jsonValue }
               }
               ... on Metaobject {
                 id
-                calories: field(key: "calories") { value }
+                calories: field(key: "calories") { jsonValue }
               }
               __typename: type
               ___typehint: type
@@ -1029,8 +1029,8 @@ describe "RequestTransformer" do
       ___extensions_widgetMetaobjects: metaobjects(first: 10, type: "widget") {
         nodes {
           id
-          boolean: field(key: "boolean") { value }
-          rating: field(key: "rating") { value }
+          boolean: field(key: "boolean") { jsonValue }
+          rating: field(key: "rating") { jsonValue }
         }
       }
     }|

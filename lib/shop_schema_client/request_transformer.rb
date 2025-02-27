@@ -215,7 +215,7 @@ module ShopSchemaClient
             selections: extract_value_object_selection(node.selections).presence,
           )
         )
-        GraphQL::Language::Nodes::Field.new(name: "value")
+        GraphQL::Language::Nodes::Field.new(name: "jsonValue")
       end
 
       metafield_key = metafield_attrs[:key]

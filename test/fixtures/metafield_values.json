@@ -14,6 +14,78 @@
     "reference": null,
     "references": null
   },
+  "collection_reference": {
+    "jsonValue": "gid://shopify/Collection/1",
+    "reference": {
+      "id": "gid://shopify/Collection/1"
+    },
+    "references": null
+  },
+  "list.collection_reference": {
+    "jsonValue": [
+      "gid://shopify/Collection/1",
+      "gid://shopify/Collection/2"
+    ],
+    "reference": null,
+    "references": {
+      "nodes": [
+        {
+          "id": "gid://shopify/Collection/1"
+        },
+        {
+          "id": "gid://shopify/Collection/2"
+        }
+      ]
+    }
+  },
+  "company_reference": {
+    "jsonValue": "gid://shopify/Company/1",
+    "reference": {
+      "id": "gid://shopify/Company/1"
+    },
+    "references": null
+  },
+  "list.company_reference": {
+    "jsonValue": [
+      "gid://shopify/Company/1",
+      "gid://shopify/Company/2"
+    ],
+    "reference": null,
+    "references": {
+      "nodes": [
+        {
+          "id": "gid://shopify/Company/1"
+        },
+        {
+          "id": "gid://shopify/Company/2"
+        }
+      ]
+    }
+  },
+  "customer_reference": {
+    "jsonValue": "gid://shopify/Customer/1",
+    "reference": {
+      "id": "gid://shopify/Customer/1"
+    },
+    "references": null
+  },
+  "list.customer_reference": {
+    "jsonValue": [
+      "gid://shopify/Customer/1",
+      "gid://shopify/Customer/2"
+    ],
+    "reference": null,
+    "references": {
+      "nodes": [
+        {
+          "id": "gid://shopify/Customer/1"
+        },
+        {
+          "id": "gid://shopify/Customer/2"
+        }
+      ]
+    }
+  },
   "date": {
     "jsonValue": "2025-02-26",
     "reference": null,
@@ -59,8 +131,32 @@
     "reference": null,
     "references": null
   },
+  "file_reference": {
+    "jsonValue": "gid://shopify/File/1",
+    "reference": {
+      "id": "gid://shopify/File/1"
+    },
+    "references": null
+  },
+  "list.file_reference": {
+    "jsonValue": [
+      "gid://shopify/File/1",
+      "gid://shopify/File/2"
+    ],
+    "reference": null,
+    "references": {
+      "nodes": [
+        {
+          "id": "gid://shopify/File/1"
+        },
+        {
+          "id": "gid://shopify/File/2"
+        }
+      ]
+    }
+  },
   "id": {
-    "jsonValue": "r2d2c3p0",
+    "jsonValue": "r2d2-c3p0",
     "reference": null,
     "references": null
   },
@@ -68,6 +164,11 @@
     "jsonValue": {
       "hello": "world"
     },
+    "reference": null,
+    "references": null
+  },
+  "language": {
+    "jsonValue": "DE",
     "reference": null,
     "references": null
   },
@@ -94,22 +195,25 @@
     "references": null
   },
   "metaobject_reference": {
-    "jsonValue": "gid://shopify/Metaobject/38043670",
+    "jsonValue": "gid://shopify/Metaobject/1",
     "reference": {
-      "id": "gid://shopify/Metaobject/38043670"
+      "id": "gid://shopify/Metaobject/1"
     },
     "references": null
   },
   "list.metaobject_reference": {
     "jsonValue": [
-      "gid://shopify/Metaobject/38043670",
-      "gid://shopify/Metaobject/38109206"
+      "gid://shopify/Metaobject/1",
+      "gid://shopify/Metaobject/2"
     ],
     "reference": null,
     "references": {
       "nodes": [
         {
-          "id": "gid://shopify/Metaobject/38043670"
+          "id": "gid://shopify/Metaobject/1"
+        },
+        {
+          "id": "gid://shopify/Metaobject/2"
         }
       ]
     }
@@ -137,7 +241,7 @@
   },
   "money": {
     "jsonValue": {
-      "amount": "23.0",
+      "amount": "23.99",
       "currency_code": "USD"
     },
     "reference": null,
@@ -149,7 +253,7 @@
     "references": null
   },
   "number_decimal": {
-    "jsonValue": "23.5",
+    "jsonValue": "23.99",
     "reference": null,
     "references": null
   },
@@ -168,23 +272,81 @@
     "reference": null,
     "references": null
   },
-  "product_reference": {
-    "jsonValue": "gid://shopify/Product/6561850556438",
+  "order_reference": {
+    "jsonValue": "gid://shopify/Order/1",
     "reference": {
-      "id": "gid://shopify/Product/6561850556438"
+      "id": "gid://shopify/Order/1"
     },
     "references": null
   },
-  "list.product_reference": {
+  "page_reference": {
+    "jsonValue": "gid://shopify/Page/1",
+    "reference": {
+      "id": "gid://shopify/Page/1"
+    },
+    "references": null
+  },
+  "list.page_reference": {
     "jsonValue": [
-      "gid://shopify/Product/6885875646486",
-      "gid://shopify/Product/6561850556438"
+      "gid://shopify/Page/1",
+      "gid://shopify/Page/2"
     ],
     "reference": null,
     "references": {
       "nodes": [
         {
-          "id": "gid://shopify/Product/6885875646486"
+          "id": "gid://shopify/Page/1"
+        },
+        {
+          "id": "gid://shopify/Page/2"
+        }
+      ]
+    }
+  },
+  "product_reference": {
+    "jsonValue": "gid://shopify/Product/1",
+    "reference": {
+      "id": "gid://shopify/Product/1"
+    },
+    "references": null
+  },
+  "list.product_reference": {
+    "jsonValue": [
+      "gid://shopify/Product/1",
+      "gid://shopify/Product/2"
+    ],
+    "reference": null,
+    "references": {
+      "nodes": [
+        {
+          "id": "gid://shopify/Product/1"
+        },
+        {
+          "id": "gid://shopify/Product/2"
+        }
+      ]
+    }
+  },
+  "product_taxonomy_value_reference": {
+    "jsonValue": "gid://shopify/TaxonomyValue/1",
+    "reference": {
+      "id": "gid://shopify/TaxonomyValue/1"
+    },
+    "references": null
+  },
+  "list.product_taxonomy_value_reference": {
+    "jsonValue": [
+      "gid://shopify/TaxonomyValue/1",
+      "gid://shopify/TaxonomyValue/2"
+    ],
+    "reference": null,
+    "references": {
+      "nodes": [
+        {
+          "id": "gid://shopify/TaxonomyValue/1"
+        },
+        {
+          "id": "gid://shopify/TaxonomyValue/2"
         }
       ]
     }
@@ -264,6 +426,30 @@
     "reference": null,
     "references": null
   },
+  "variant_reference": {
+    "jsonValue": "gid://shopify/ProductVariant/1",
+    "reference": {
+      "id": "gid://shopify/ProductVariant/1"
+    },
+    "references": null
+  },
+  "list.variant_reference": {
+    "jsonValue": [
+      "gid://shopify/ProductVariant/1",
+      "gid://shopify/ProductVariant/2"
+    ],
+    "reference": null,
+    "references": {
+      "nodes": [
+        {
+          "id": "gid://shopify/ProductVariant/1"
+        },
+        {
+          "id": "gid://shopify/ProductVariant/2"
+        }
+      ]
+    }
+  },
   "volume": {
     "jsonValue": {
       "value": 23.0,
@@ -289,7 +475,7 @@
   "weight": {
     "jsonValue": {
       "value": 23.0,
-      "unit": "POUNDS"
+      "unit": "OUNCES"
     },
     "reference": null,
     "references": null

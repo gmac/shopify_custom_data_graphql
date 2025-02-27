@@ -3,10 +3,10 @@
     "product": {
       "id": "gid://shopify/Product/6885875646486",
       "___extensions_boolean": {
-        "value": "true"
+        "jsonValue": true
       },
       "___extensions_color": {
-        "value": "#006ba0"
+        "jsonValue": "#006ba0"
       }
     }
   }

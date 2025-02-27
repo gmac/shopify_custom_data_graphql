@@ -42,6 +42,7 @@ end
 $base_schema = nil
 $shop_schema = nil
 $shop_secrets = nil
+$metafield_values = nil
 
 def base_schema
   $base_schema ||= load_base_admin_schema
@@ -49,6 +50,10 @@ end
 
 def shop_schema
   $shop_schema ||= load_shop_fixtures_schema
+end
+
+def metafield_values
+  $metafield_values ||= JSON.parse(File.read("#{__dir__}/fixtures/metafield_values.json"))
 end
 
 def fetch_response(casette_name, query, version: "2025-01", variables: nil)
