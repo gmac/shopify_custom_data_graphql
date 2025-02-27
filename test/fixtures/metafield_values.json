@@ -60,7 +60,7 @@
     "references": null
   },
   "id": {
-    "jsonValue": "r2d2c3p0",
+    "jsonValue": "r2d2-c3p0",
     "reference": null,
     "references": null
   },
@@ -94,22 +94,25 @@
     "references": null
   },
   "metaobject_reference": {
-    "jsonValue": "gid://shopify/Metaobject/38043670",
+    "jsonValue": "gid://shopify/Metaobject/1",
     "reference": {
-      "id": "gid://shopify/Metaobject/38043670"
+      "id": "gid://shopify/Metaobject/1"
     },
     "references": null
   },
   "list.metaobject_reference": {
     "jsonValue": [
-      "gid://shopify/Metaobject/38043670",
-      "gid://shopify/Metaobject/38109206"
+      "gid://shopify/Metaobject/1",
+      "gid://shopify/Metaobject/2"
     ],
     "reference": null,
     "references": {
       "nodes": [
         {
-          "id": "gid://shopify/Metaobject/38043670"
+          "id": "gid://shopify/Metaobject/1"
+        },
+        {
+          "id": "gid://shopify/Metaobject/2"
         }
       ]
     }
@@ -137,7 +140,7 @@
   },
   "money": {
     "jsonValue": {
-      "amount": "23.0",
+      "amount": "23.99",
       "currency_code": "USD"
     },
     "reference": null,
@@ -149,7 +152,7 @@
     "references": null
   },
   "number_decimal": {
-    "jsonValue": "23.5",
+    "jsonValue": "23.99",
     "reference": null,
     "references": null
   },
@@ -169,22 +172,25 @@
     "references": null
   },
   "product_reference": {
-    "jsonValue": "gid://shopify/Product/6561850556438",
+    "jsonValue": "gid://shopify/Product/1",
     "reference": {
-      "id": "gid://shopify/Product/6561850556438"
+      "id": "gid://shopify/Product/1"
     },
     "references": null
   },
   "list.product_reference": {
     "jsonValue": [
-      "gid://shopify/Product/6885875646486",
-      "gid://shopify/Product/6561850556438"
+      "gid://shopify/Product/1",
+      "gid://shopify/Product/2"
     ],
     "reference": null,
     "references": {
       "nodes": [
         {
-          "id": "gid://shopify/Product/6885875646486"
+          "id": "gid://shopify/Product/1"
+        },
+        {
+          "id": "gid://shopify/Product/2"
         }
       ]
     }
@@ -289,7 +295,7 @@
   "weight": {
     "jsonValue": {
       "value": 23.0,
-      "unit": "POUNDS"
+      "unit": "OUNCES"
     },
     "reference": null,
     "references": null

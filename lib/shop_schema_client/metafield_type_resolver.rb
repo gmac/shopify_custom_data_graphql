@@ -15,6 +15,34 @@ module ShopSchemaClient
     VOLUME_TYPENAME = "VolumeMetatype"
     WEIGHT_TYPENAME = "Weight"
 
+    UNITS_MAP = {
+      # dimensions
+      "cm" => "CENTIMETERS",
+      "in" => "INCHES",
+      "ft" => "FEET",
+      "mm" => "MILLIMETERS",
+      "m"  => "METERS",
+      "yd" => "YARDS",
+      # volumes
+      "ml" => "MILLILITERS",
+      "cl" => "CENTILITERS",
+      "L" => "LITERS",
+      "m3" => "CUBIC_METERS",
+      "us_fl_oz" => "FLUID_OUNCES",
+      "us_pt" => "PINTS",
+      "us_qt" => "QUARTS",
+      "us_gal" => "GALLONS",
+      "imp_fl_oz" => "IMPERIAL_FLUID_OUNCES",
+      "imp_pt" => "IMPERIAL_PINTS",
+      "imp_qt" => "IMPERIAL_QUARTS",
+      "imp_gal" => "IMPERIAL_GALLONS",
+      # weights
+      "g"  => "GRAMS",
+      "kg" => "KILOGRAMS",
+      "lb" => "POUNDS",
+      "oz" => "OUNCES",
+    }.freeze
+
     class << self
       def connection_typename(native_typename)
         "#{native_typename}#{CONNECTION_TYPE_SUFFIX}"
@@ -61,75 +89,53 @@ module ShopSchemaClient
         elsif is_reference
           return value["reference"]
         else
-          value = value["value"]
+          value = value["jsonValue"]
         end
 
-        return nil if value.nil? || value.empty?
+        return nil if value.nil?
 
         case type_name
         when "boolean"
-          value == "true"
-        when "color"
+          value == true
+        when "color", "list.color", "date", "list.date", "date_time", "list.date_time"
           value
-        when "list.color"
-          JSON.parse(value)
-        when "date", "date_time"
-          Time.parse(value)
-        when "list.date", "list.date_time"
-          JSON.parse(value).map! { Time.parse(_1) }
         when "dimension"
-          unit_value_with_selections(JSON.parse(value), selections, DIMENSION_TYPENAME)
+          unit_value_with_selections(value, selections, DIMENSION_TYPENAME)
         when "list.dimension"
-          JSON.parse(value).map! { unit_value_with_selections(_1, selections, DIMENSION_TYPENAME) }
-        when "id"
+          value.map! { unit_value_with_selections(_1, selections, DIMENSION_TYPENAME) }
+        when "id", "json", "language"
           value
-        when "json"
-          JSON.parse(value)
-        when "language"
+        when "link", "list.link"
           value
-        when "link"
-          value
-        when "list.link"
-          JSON.parse(value)
         when "money"
-          money_with_selections(JSON.parse(value), selections)
+          money_with_selections(value, selections)
         when "multi_line_text_field"
           value
         when "number_decimal"
           Float(value)
         when "list.number_decimal"
-          JSON.parse(value).map!(&:Float)
+          value.map! { Float(_1) }
         when "number_integer"
           Integer(value)
         when "list.number_integer"
-          JSON.parse(value).map!(&:Integer)
+          value.map! { Integer(_1) }
         when "rating"
-          rating_with_selections(JSON.parse(value), selections)
+          rating_with_selections(value, selections)
         when "list.rating"
-          JSON.parse(value).map! { rating_with_selections(_1, selections) }
-        when "rich_text_field"
-          JSON.parse(value)
-        when "single_line_text_field"
+          value.map! { rating_with_selections(_1, selections) }
+        when "rich_text_field", "single_line_text_field", "list.single_line_text_field", "url", "list.url"
           value
-        when "list.single_line_text_field"
-          JSON.parse(value).map!(&:to_s)
-        when "url"
-          value
-        when "list.url"
-          JSON.parse(value)
         when "volume"
-          unit_value_with_selections(JSON.parse(value), selections, VOLUME_TYPENAME)
+          unit_value_with_selections(value, selections, VOLUME_TYPENAME)
         when "list.volume"
-          JSON.parse(value).map! { unit_value_with_selections(_1, selections, VOLUME_TYPENAME) }
+          value.map! { unit_value_with_selections(_1, selections, VOLUME_TYPENAME) }
         when "weight"
-          unit_value_with_selections(JSON.parse(value), selections, WEIGHT_TYPENAME)
+          unit_value_with_selections(value, selections, WEIGHT_TYPENAME)
         when "list.weight"
-          JSON.parse(value).map! { unit_value_with_selections(_1, selections, WEIGHT_TYPENAME) }
+          value.map! { unit_value_with_selections(_1, selections, WEIGHT_TYPENAME) }
         else
           raise "Unknown metafield type `#{metafield_type}`"
         end
-      rescue JSON::ParserError
-        nil
       end
 
       def unit_value_with_selections(obj, selections, type_name)
@@ -137,7 +143,8 @@ module ShopSchemaClient
           field_name, node_name = selection_alias_and_field(sel)
           case node_name
           when "unit"
-            memo[field_name] = obj["unit"]
+            unit = obj["unit"]
+            memo[field_name] = UNITS_MAP.fetch(unit, unit)
           when "value"
             memo[field_name] = Float(obj["value"])
           when "__typename"
@@ -153,7 +160,7 @@ module ShopSchemaClient
           when "amount"
             memo[field_name] = Float(obj["amount"])
           when "currencyCode"
-            memo[field_name] = obj["currency"]
+            memo[field_name] = obj["currency_code"]
           when "__typename"
             memo[field_name] = MONEY_TYPENAME
           end
