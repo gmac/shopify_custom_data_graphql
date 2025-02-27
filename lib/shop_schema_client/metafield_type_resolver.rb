@@ -103,8 +103,10 @@ module ShopSchemaClient
           unit_value_with_selections(value, selections, DIMENSION_TYPENAME)
         when "list.dimension"
           value.map! { unit_value_with_selections(_1, selections, DIMENSION_TYPENAME) }
-        when "id", "json", "language"
+        when "id", "json"
           value
+        when "language"
+          value.upcase
         when "link", "list.link"
           value
         when "money"

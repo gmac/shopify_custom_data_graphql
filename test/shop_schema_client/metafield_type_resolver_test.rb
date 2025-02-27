@@ -59,6 +59,10 @@ describe "MetafieldTypeResolver" do
     assert_equal "r2d2-c3p0", resolve_fixture("id")
   end
 
+  def test_resolves_language
+    assert_equal "DE", resolve_fixture("language")
+  end
+
   def test_resolves_link
     skip
   end
