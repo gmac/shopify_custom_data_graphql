@@ -14,6 +14,12 @@ module ShopSchemaClient
       argument :type, String, required: true
     end
 
+    class MetaobjectDirective < GraphQL::Schema::Directive
+      graphql_name "metaobject"
+      locations FIELD_DEFINITION
+      argument :type, String, required: true
+    end
+
     attr_reader :schema_types
 
     def initialize(base_schema, catalog)
@@ -22,27 +28,32 @@ module ShopSchemaClient
 
       introspection_names = @base_schema.introspection_system.types.keys
       @schema_types = @base_schema.types.reject! { |k, v| introspection_names.include?(k) }
-      @metaobjects_to_build = {}
+      @metaobject_unions = {}
     end
 
     def perform
-      @base_schema.possible_types(@schema_types["HasMetafields"]).each do |native_type|
-        build_native_type_extensions(native_type)
+      query_name = @base_schema.query.graphql_name
+      mutation_name = @base_schema.mutation.graphql_name
+
+      @base_schema.possible_types(@schema_types["HasMetafields"]).each do |owner_type|
+        build_owner_type_extensions(owner_type)
       end
 
-      while @metaobjects_to_build.any?
-        defs = @metaobjects_to_build
-        @metaobjects_to_build = {}
-        defs.each do |metaobject_struct, is_list|
-          type = @schema_types[metaobject_struct.typename] || case metaobject_struct
-          when MetaobjectDefinition
-            build_metaobject(metaobject_struct)
-          when MetaobjectUnion
-            build_mixed_metaobject(metaobject_struct)
-          end
+      metaobject_queries = @catalog.metaobject_definitions.each_with_object({}) do |metaobject_def, memo|
+        next if metaobject_def.type.start_with?("app--")
 
-          build_connection_type(type) if is_list
-        end
+        metaobject_type = build_metaobject(metaobject_def)
+        connection_type = build_connection_type(metaobject_type)
+        memo[metaobject_def] = connection_type
+      end
+
+      if metaobject_queries.any?
+        build_root_query_extensions(@schema_types[query_name], metaobject_queries)
+      end
+
+      @metaobject_unions.each do |metaobject_union, is_list|
+        metaobject_type = build_mixed_metaobject(metaobject_union)
+        build_connection_type(metaobject_type) if is_list
       end
 
       builder = self
@@ -51,8 +62,8 @@ module ShopSchemaClient
         directive(MetafieldDirective)
         add_type_and_traverse(builder.schema_types.values, root: false)
         orphan_types(builder.schema_types.values.select { |t| t.respond_to?(:kind) && t.kind.object? })
-        query(builder.schema_types["QueryRoot"])
-        mutation(builder.schema_types["MutationRoot"])
+        query(builder.schema_types[query_name])
+        mutation(builder.schema_types[mutation_name])
         own_orphan_types.clear
       end
     end
@@ -93,24 +104,21 @@ module ShopSchemaClient
         type = @schema_types["Link"]
         is_list ? type.to_list_type : type
       when "metaobject_reference", "list.metaobject_reference"
-        metaobject_def = field_def.linked_metaobject(@catalog)
-        if metaobject_def
-          @metaobjects_to_build[metaobject_def] ||= is_list
+        if (object = field_def.linked_metaobject(@catalog))
           GraphQL::Schema::LateBoundType.new(
-            is_list ? MetafieldTypeResolver.connection_typename(metaobject_def.typename) : metaobject_def.typename
+            is_list ? MetafieldTypeResolver.connection_typename(object.typename) : object.typename
           )
         else
-          raise "Invalid metaobject_reference for `#{field_def.key}`"
+          raise "Invalid #{field_def.type} for `#{field_def.key}`"
         end
       when "mixed_reference", "list.mixed_reference"
-        metaobject_set = field_def.linked_metaobject_union(@catalog)
-        if metaobject_set
-          @metaobjects_to_build[metaobject_set] ||= is_list
+        if (union = field_def.linked_metaobject_union(@catalog))
+          @metaobject_unions[union] ||= is_list
           GraphQL::Schema::LateBoundType.new(
-            is_list ? MetafieldTypeResolver.connection_typename(metaobject_set.typename) : metaobject_set.typename
+            is_list ? MetafieldTypeResolver.connection_typename(union.typename) : union.typename
           )
         else
-          raise "Invalid metaobject_references for `#{field_def.key}`"
+          raise "Invalid #{field_def.type} for `#{field_def.key}`"
         end
       when "money"
         @schema_types["MoneyV2"]
@@ -154,29 +162,70 @@ module ShopSchemaClient
       end
     end
 
-    def build_native_type_extensions(native_type)
-      metafield_definitions = @catalog.metafields_for_type(native_type.graphql_name)
+    def build_root_query_extensions(query_type, metaobject_queries)
+      extensions_typename = MetafieldTypeResolver.extensions_typename(query_type.graphql_name)
+      builder = self
+
+      @schema_types[extensions_typename] ||= begin
+        extensions_type = Class.new(GraphQL::Schema::Object) do
+          graphql_name(extensions_typename)
+          description("Custom metaobject query extensions.")
+
+          metaobject_queries.each do |metaobject_def, connection_type|
+            field(
+              metaobject_def.connection_field.to_sym,
+              connection_type,
+              null: true,
+              description: "A paginated list of `#{metaobject_def.typename}` items.",
+              connection: false,
+            ) do |f|
+              f.directive(MetaobjectDirective, type: metaobject_def.type)
+              f.argument(:first, builder.schema_types["Int"], required: false)
+              f.argument(:last, builder.schema_types["Int"], required: false)
+              f.argument(:before, builder.schema_types["String"], required: false)
+              f.argument(:after, builder.schema_types["String"], required: false)
+            end
+          end
+        end
+
+        query_type.field(
+          :extensions,
+          extensions_type,
+          null: false,
+          description: "Custom metaobject query extensions."
+        )
+
+        extensions_type
+      end
+    end
+
+    def build_owner_type_extensions(owner_type)
+      metafield_definitions = @catalog.metafields_for_type(owner_type.graphql_name)
       return unless metafield_definitions&.any?
 
-      extensions_typename = MetafieldTypeResolver.extensions_typename(native_type.graphql_name)
+      extensions_typename = MetafieldTypeResolver.extensions_typename(owner_type.graphql_name)
       return unless @schema_types[extensions_typename].nil?
 
       builder = self
-      type = @schema_types[extensions_typename] = Class.new(GraphQL::Schema::Object) do
-        graphql_name(extensions_typename)
-        description("Projected metafield extensions for the #{native_type.graphql_name} type.")
+      @schema_types[extensions_typename] = begin
+        extensions_type = Class.new(GraphQL::Schema::Object) do
+          graphql_name(extensions_typename)
+          description("Metafield extensions for the `#{owner_type.graphql_name}` type.")
 
-        metafield_definitions.each do |metafield_def|
-          builder.build_object_field(metafield_def, self)
+          metafield_definitions.each do |metafield_def|
+            builder.build_object_metafield(metafield_def, self)
+          end
         end
-      end
 
-      native_type.field(
-        :extensions,
-        type,
-        null: false,
-        description: "Projected metafield extensions.",
-      )
+        owner_type.field(
+          :extensions,
+          extensions_type,
+          null: false,
+          description: "Custom metafield extensions.",
+        )
+
+        extensions_type
+      end
     end
 
     # these metaobject keys are already restricted by the Shopify backend...
@@ -196,7 +245,7 @@ module ShopSchemaClient
             raise ValidationError, "Metaobject key `#{metafield_def.key}` is reserved for system use"
           end
 
-          builder.build_object_field(metafield_def, self)
+          builder.build_object_metafield(metafield_def, self)
         end
       end
     end
@@ -210,7 +259,7 @@ module ShopSchemaClient
       end
     end
 
-    def build_object_field(metafield_def, owner)
+    def build_object_metafield(metafield_def, owner)
       builder = self
       type = type_for_metafield_definition(metafield_def)
       owner.field(

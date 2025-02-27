@@ -25,7 +25,7 @@ describe "RequestTransformer" do
     expected_transforms = {
       "f" => {
         "extensions" => {
-          "fx" => { "t" => "metafield_extensions" },
+          "fx" => { "t" => "extensions_scope" },
           "f" => {
             "boolean" => { "fx" => { "t" => "boolean" } },
             "color" => { "fx" => { "t" => "color" } },
@@ -60,7 +60,7 @@ describe "RequestTransformer" do
     expected_transforms = {
       "f" => {
         "extensions" => {
-          "fx" => { "t" => "metafield_extensions" },
+          "fx" => { "t" => "extensions_scope" },
           "f" => {
             "dimension" => { "fx" => { "t" => "dimension", "s" => ["unit", "value"] } },
             "rating" => { "fx" => { "t" => "rating", "s" => ["maximum:max", "value"] } },
@@ -99,7 +99,7 @@ describe "RequestTransformer" do
     expected_transforms = {
       "f" => {
         "extensions" => {
-          "fx" => { "t" => "metafield_extensions" },
+          "fx" => { "t" => "extensions_scope" },
           "f" => {
             "fileReference" => { "fx" => { "t" => "file_reference" } },
             "productReference" => { "fx" => { "t" => "product_reference" } },
@@ -146,7 +146,7 @@ describe "RequestTransformer" do
     expected_transforms = {
       "f" => {
         "extensions" => {
-          "fx" => { "t" => "metafield_extensions" },
+          "fx" => { "t" => "extensions_scope" },
           "f" => {
             "fileReferenceList" => { "fx" => { "t" => "list.file_reference" } },
             "productReferenceList" => { "fx" => { "t" => "list.product_reference" } },
@@ -177,9 +177,9 @@ describe "RequestTransformer" do
     expected_transforms = {
       "f" => {
         "extensions" => {
-          "fx" => { "t" => "metafield_extensions" },
+          "fx" => { "t" => "extensions_scope" },
           "f" => {
-            "__typename" => { "fx" => { "t" => "extensions_typename" } },
+            "__typename" => { "fx" => { "t" => "static_typename", "v" => "ProductExtensions" } },
           },
         },
       },
@@ -223,13 +223,13 @@ describe "RequestTransformer" do
     expected_transforms = {
       "f" => {
         "extensions" => {
-          "fx" => { "t" => "metafield_extensions" },
+          "fx" => { "t" => "extensions_scope" },
           "f" => {
             "productReference" => {
               "fx" => { "t" => "product_reference" },
               "f" => {
                 "extensions" => {
-                  "fx" => { "t" => "metafield_extensions" },
+                  "fx" => { "t" => "extensions_scope" },
                   "f" => {
                     "boolean" => { "fx" => { "t" => "boolean" } },
                     "color" => { "fx" => { "t" => "color" } },
@@ -272,14 +272,14 @@ describe "RequestTransformer" do
     expected_transforms = {
       "f" => {
         "extensions1" => {
-          "fx" => { "t" => "metafield_extensions" },
+          "fx" => { "t" => "extensions_scope" },
           "f" => {
             "myBoolean" => { "fx" => { "t" => "boolean" } },
-            "myTypename" => { "fx" => { "t" => "extensions_typename" } },
+            "myTypename" => { "fx" => { "t" => "static_typename", "v" => "ProductExtensions" } },
           },
         },
         "extensions2" => {
-          "fx" => { "t" => "metafield_extensions" },
+          "fx" => { "t" => "extensions_scope" },
           "f" => {
             "myColor" => { "fx" => { "t" => "color" } },
           },
@@ -329,7 +329,7 @@ describe "RequestTransformer" do
     expected_transforms = {
       "f" => {
         "extensions" => {
-          "fx" => { "t" => "metafield_extensions" },
+          "fx" => { "t" => "extensions_scope" },
           "f" => {
             "widget" => {
               "fx" => { "t" => "metaobject_reference" },
@@ -375,7 +375,7 @@ describe "RequestTransformer" do
     expected_transforms = {
       "f" => {
         "extensions" => {
-          "fx" => { "t" => "metafield_extensions" },
+          "fx" => { "t" => "extensions_scope" },
           "f" => {
             "widget" => {
               "fx" => { "t" => "metaobject_reference" },
@@ -425,7 +425,7 @@ describe "RequestTransformer" do
     expected_transforms = {
       "f" => {
         "extensions" => {
-          "fx" => { "t" => "metafield_extensions" },
+          "fx" => { "t" => "extensions_scope" },
           "f" => {
             "widget" => {
               "fx" => { "t" => "metaobject_reference" },
@@ -483,7 +483,7 @@ describe "RequestTransformer" do
     expected_transforms = {
       "f" => {
         "extensions" => {
-          "fx" => { "t" => "metafield_extensions" },
+          "fx" => { "t" => "extensions_scope" },
           "f" => {
             "widget" => {
               "fx" => { "t" => "metaobject_reference" },
@@ -521,7 +521,7 @@ describe "RequestTransformer" do
     expected_transforms = {
       "f" => {
         "extensions" => {
-          "fx" => { "t" => "metafield_extensions" },
+          "fx" => { "t" => "extensions_scope" },
           "f" => {
             "widget" => {
               "fx" => { "t" => "metaobject_reference" },
@@ -574,7 +574,7 @@ describe "RequestTransformer" do
     expected_transforms = {
       "f" => {
         "extensions" => {
-          "fx" => { "t" => "metafield_extensions" },
+          "fx" => { "t" => "extensions_scope" },
           "f" => {
             "widget" => {
               "fx" => { "t" => "metaobject_reference" },
@@ -627,7 +627,7 @@ describe "RequestTransformer" do
     expected_transforms = {
       "f" => {
         "extensions" => {
-          "fx" => { "t" => "metafield_extensions" },
+          "fx" => { "t" => "extensions_scope" },
           "f" => {
             "widget" => {
               "fx" => { "t" => "metaobject_reference" },
@@ -676,7 +676,7 @@ describe "RequestTransformer" do
     expected_transforms = {
       "f" => {
         "extensions" => {
-          "fx" => { "t" => "metafield_extensions" },
+          "fx" => { "t" => "extensions_scope" },
           "f" => {
             "widget" => {
               "fx" => { "t" => "metaobject_reference" },
@@ -718,7 +718,7 @@ describe "RequestTransformer" do
     expected_transforms = {
       "f" => {
         "extensions" => {
-          "fx" => { "t" => "metafield_extensions" },
+          "fx" => { "t" => "extensions_scope" },
           "f" => {
             "rating" => { "fx" => { "t" => "rating", "s" => ["max", "min", "value"] } },
           },
@@ -764,7 +764,7 @@ describe "RequestTransformer" do
     expected_transforms = {
       "f" => {
         "extensions" => {
-          "fx" => { "t" => "metafield_extensions" },
+          "fx" => { "t" => "extensions_scope" },
           "f" => {
             "rating1" => { "fx" => { "t" => "rating", "s" => ["max", "min", "value"] } },
             "rating2" => { "fx" => { "t" => "rating", "s" => ["max", "min", "value"] } },
@@ -802,7 +802,7 @@ describe "RequestTransformer" do
     expected_transforms = {
       "f" => {
         "extensions" => {
-          "fx" => { "t" => "metafield_extensions" },
+          "fx" => { "t" => "extensions_scope" },
           "f" => {
             "boolean" => { "fx" => { "t" => "boolean" } },
             "color" => { "fx" => { "t" => "color" } },
@@ -851,7 +851,7 @@ describe "RequestTransformer" do
           "Product" => {
             "f" => {
               "productExt" => {
-                "fx" => { "t" => "metafield_extensions" },
+                "fx" => { "t" => "extensions_scope" },
                 "f" => {
                   "boolean" => { "fx" => { "t" => "boolean" } },
                 },
@@ -861,7 +861,7 @@ describe "RequestTransformer" do
           "ProductVariant" => {
             "f" => {
               "variantExt" => {
-                "fx" => { "t" => "metafield_extensions" },
+                "fx" => { "t" => "extensions_scope" },
                 "f" => {
                   "test" => { "fx" => { "t" => "boolean" } },
                 },
@@ -916,7 +916,7 @@ describe "RequestTransformer" do
           "Product" => {
             "f" => {
               "productExt" => {
-                "fx" => { "t" => "metafield_extensions" },
+                "fx" => { "t" => "extensions_scope" },
                 "f" => {
                   "boolean" => { "fx" => { "t" => "boolean" } },
                 },
@@ -926,7 +926,7 @@ describe "RequestTransformer" do
           "ProductVariant" => {
             "f" => {
               "variantExt" => {
-                "fx" => { "t" => "metafield_extensions" },
+                "fx" => { "t" => "extensions_scope" },
                 "f" => {
                   "test" => { "fx" => { "t" => "boolean" } },
                 },
@@ -978,7 +978,7 @@ describe "RequestTransformer" do
     expected_transforms = {
       "f" => {
         "extensions" => {
-          "fx" => { "t" => "metafield_extensions" },
+          "fx" => { "t" => "extensions_scope" },
           "f" => {
             "mixedReference" => {
               "fx" => { "t" => "mixed_reference" },
@@ -1007,6 +1007,56 @@ describe "RequestTransformer" do
 
     assert_equal expected_query.squish, result.as_json["query"].squish
     assert_equal expected_transforms, result.as_json["transforms"].dig("f", "product")
+  end
+
+  def test_transforms_root_query_extensions
+    result = transform_request(%|query {
+      extensions {
+        widgetMetaobjects(first: 10) {
+          nodes {
+            id
+            boolean
+            rating {
+              max
+              value
+            }
+          }
+        }
+      }
+    }|)
+
+    expected_query = %|query {
+      ___extensions_widgetMetaobjects: metaobjects(first: 10, type: "widget") {
+        nodes {
+          id
+          boolean: field(key: "boolean") { value }
+          rating: field(key: "rating") { value }
+        }
+      }
+    }|
+
+    expected_transforms = {
+      "f" => {
+        "extensions" => {
+          "fx" => { "t" => "extensions_scope" },
+          "f" => {
+            "widgetMetaobjects" => {
+              "f" => {
+                "nodes" => {
+                  "f" => {
+                    "boolean" => { "fx" => { "t" => "boolean" } },
+                    "rating" => { "fx" => { "t" => "rating", "s" => ["max", "value"] } },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    }
+
+    assert_equal expected_query.squish, result.as_json["query"].squish
+    assert_equal expected_transforms, result.as_json["transforms"]
   end
 
   private
