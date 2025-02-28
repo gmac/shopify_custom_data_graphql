@@ -1,0 +1,20 @@
+{
+  "data": {
+    "product": {
+      "id": "gid://shopify/Product/6885875646486",
+      "___extensions_dimension": {
+        "jsonValue": {
+          "value": 24.0,
+          "unit": "INCHES"
+        }
+      },
+      "___extensions_rating": {
+        "jsonValue": {
+          "scale_min": "1.0",
+          "scale_max": "5.0",
+          "value": "5.0"
+        }
+      }
+    }
+  }
+}

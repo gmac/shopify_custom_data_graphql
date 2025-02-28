@@ -1,10 +1,11 @@
 # frozen_string_literal: true
 
 module ShopSchemaClient
-  class SchemaComposer
+  class SchemaCatalog
     MetafieldDefinition = Struct.new(
       :key,
       :type,
+      :namespace,
       :description,
       :validations,
       :owner_type,
@@ -15,6 +16,7 @@ module ShopSchemaClient
           new(
             key: metafield_def["key"],
             type: metafield_def.dig("type", "name"),
+            namespace: metafield_def["namespace"],
             description: metafield_def["description"],
             validations: metafield_def["validations"],
             owner_type: metafield_def["ownerType"],

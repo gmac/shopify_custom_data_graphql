@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module ShopSchemaClient
-  class SchemaComposer
+  class SchemaCatalog
     class MetaobjectUnion
       attr_reader :metaobject_definitions
 

@@ -1,6 +1,7 @@
 [
   {
     "key": "widget",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "metaobject_reference" },
     "validations": [
@@ -13,6 +14,7 @@
   },
   {
     "key": "boolean",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "boolean" },
     "validations": [],
@@ -20,6 +22,7 @@
   },
   {
     "key": "color",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "color" },
     "validations": [],
@@ -27,6 +30,7 @@
   },
   {
     "key": "color_list",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "list.color" },
     "validations": [],
@@ -34,6 +38,7 @@
   },
   {
     "key": "collection_reference",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "collection_reference" },
     "validations": [],
@@ -41,6 +46,7 @@
   },
   {
     "key": "collection_reference_list",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "list.collection_reference" },
     "validations": [],
@@ -48,6 +54,7 @@
   },
   {
     "key": "company_reference",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "company_reference" },
     "validations": [],
@@ -55,6 +62,7 @@
   },
   {
     "key": "company_reference_list",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "list.company_reference" },
     "validations": [],
@@ -62,6 +70,7 @@
   },
   {
     "key": "customer_reference",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "customer_reference" },
     "validations": [],
@@ -69,6 +78,7 @@
   },
   {
     "key": "customer_reference_list",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "list.customer_reference" },
     "validations": [],
@@ -76,6 +86,7 @@
   },
   {
     "key": "date",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "date" },
     "validations": [],
@@ -83,6 +94,7 @@
   },
   {
     "key": "date_list",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "list.date" },
     "validations": [],
@@ -90,6 +102,7 @@
   },
   {
     "key": "date_time",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "date_time" },
     "validations": [],
@@ -97,6 +110,7 @@
   },
   {
     "key": "date_time_list",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "list.date_time" },
     "validations": [],
@@ -104,6 +118,7 @@
   },
   {
     "key": "decimal",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "number_decimal" },
     "validations": [],
@@ -111,6 +126,7 @@
   },
   {
     "key": "decimal_list",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "list.number_decimal" },
     "validations": [],
@@ -118,6 +134,7 @@
   },
   {
     "key": "dimension",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "dimension" },
     "validations": [],
@@ -125,6 +142,7 @@
   },
   {
     "key": "dimension_list",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "list.dimension" },
     "validations": [],
@@ -132,6 +150,7 @@
   },
   {
     "key": "file_reference",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "file_reference" },
     "validations": [],
@@ -139,6 +158,7 @@
   },
   {
     "key": "file_reference_list",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "list.file_reference" },
     "validations": [],
@@ -146,6 +166,7 @@
   },
   {
     "key": "identity",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "id" },
     "validations": [],
@@ -153,6 +174,7 @@
   },
   {
     "key": "integer",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "number_integer" },
     "validations": [],
@@ -160,6 +182,7 @@
   },
   {
     "key": "integer_list",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "list.number_integer" },
     "validations": [],
@@ -167,6 +190,7 @@
   },
   {
     "key": "json",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "json" },
     "validations": [],
@@ -174,6 +198,7 @@
   },
   {
     "key": "language",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "language" },
     "validations": [],
@@ -181,6 +206,7 @@
   },
   {
     "key": "link",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "link" },
     "validations": [],
@@ -188,6 +214,7 @@
   },
   {
     "key": "link_list",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "list.link" },
     "validations": [],
@@ -195,6 +222,7 @@
   },
   {
     "key": "metaobject_reference",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "metaobject_reference" },
     "validations": [
@@ -207,6 +235,7 @@
   },
   {
     "key": "metaobject_reference_list",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "list.metaobject_reference" },
     "validations": [
@@ -219,6 +248,7 @@
   },
   {
     "key": "mixed_reference",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "mixed_reference" },
     "validations": [
@@ -234,6 +264,7 @@
   },
   {
     "key": "mixed_reference_list",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "list.mixed_reference" },
     "validations": [
@@ -249,6 +280,7 @@
   },
   {
     "key": "money",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "money" },
     "validations": [],
@@ -256,6 +288,7 @@
   },
   {
     "key": "multi_line_text",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "multi_line_text_field" },
     "validations": [],
@@ -263,6 +296,7 @@
   },
   {
     "key": "order_reference",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "order_reference" },
     "validations": [],
@@ -270,6 +304,7 @@
   },
   {
     "key": "page_reference",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "page_reference" },
     "validations": [],
@@ -277,6 +312,7 @@
   },
   {
     "key": "page_reference_list",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "list.page_reference" },
     "validations": [],
@@ -284,6 +320,7 @@
   },
   {
     "key": "product_reference",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "product_reference" },
     "validations": [],
@@ -291,6 +328,7 @@
   },
   {
     "key": "product_reference_list",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "list.product_reference" },
     "validations": [],
@@ -298,6 +336,7 @@
   },
   {
     "key": "product_taxonomy_value_reference",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "product_taxonomy_value_reference" },
     "validations": [],
@@ -305,6 +344,7 @@
   },
   {
     "key": "product_taxonomy_value_reference_list",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "list.product_taxonomy_value_reference" },
     "validations": [],
@@ -312,6 +352,7 @@
   },
   {
     "key": "rating",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "rating" },
     "validations": [
@@ -328,6 +369,7 @@
   },
   {
     "key": "rating_list",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "list.rating" },
     "validations": [
@@ -344,6 +386,7 @@
   },
   {
     "key": "rich_text",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "rich_text_field" },
     "validations": [],
@@ -351,6 +394,7 @@
   },
   {
     "key": "single_line_text",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "single_line_text_field" },
     "validations": [],
@@ -358,6 +402,7 @@
   },
   {
     "key": "single_line_text_list",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "list.single_line_text_field" },
     "validations": [],
@@ -365,6 +410,7 @@
   },
   {
     "key": "url",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "url" },
     "validations": [],
@@ -372,6 +418,7 @@
   },
   {
     "key": "url_list",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "list.url" },
     "validations": [],
@@ -379,6 +426,7 @@
   },
   {
     "key": "variant_reference",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "variant_reference" },
     "validations": [],
@@ -386,6 +434,7 @@
   },
   {
     "key": "variant_reference_list",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "list.variant_reference" },
     "validations": [],
@@ -393,6 +442,7 @@
   },
   {
     "key": "volume",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "volume" },
     "validations": [],
@@ -400,6 +450,7 @@
   },
   {
     "key": "volume_list",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "list.volume" },
     "validations": [],
@@ -407,6 +458,7 @@
   },
   {
     "key": "weight",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "weight" },
     "validations": [],
@@ -414,6 +466,7 @@
   },
   {
     "key": "weight_list",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "list.weight" },
     "validations": [],
@@ -421,6 +474,7 @@
   },
   {
     "key": "test",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "boolean" },
     "validations": [],
@@ -428,6 +482,7 @@
   },
   {
     "key": "test",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "boolean" },
     "validations": [],
@@ -435,6 +490,7 @@
   },
   {
     "key": "test",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "boolean" },
     "validations": [],
@@ -442,6 +498,7 @@
   },
   {
     "key": "test",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "boolean" },
     "validations": [],
@@ -449,6 +506,7 @@
   },
   {
     "key": "test",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "boolean" },
     "validations": [],
@@ -456,6 +514,7 @@
   },
   {
     "key": "test",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "boolean" },
     "validations": [],
@@ -463,6 +522,7 @@
   },
   {
     "key": "test",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "boolean" },
     "validations": [],
@@ -470,6 +530,7 @@
   },
   {
     "key": "test",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "boolean" },
     "validations": [],
@@ -477,6 +538,7 @@
   },
   {
     "key": "test",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "boolean" },
     "validations": [],
@@ -484,6 +546,7 @@
   },
   {
     "key": "test",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "boolean" },
     "validations": [],
@@ -491,6 +554,7 @@
   },
   {
     "key": "test",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "boolean" },
     "validations": [],
@@ -498,6 +562,7 @@
   },
   {
     "key": "test",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "boolean" },
     "validations": [],
@@ -505,6 +570,7 @@
   },
   {
     "key": "test",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "boolean" },
     "validations": [],
@@ -512,6 +578,7 @@
   },
   {
     "key": "test",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "boolean" },
     "validations": [],
@@ -519,6 +586,7 @@
   },
   {
     "key": "test",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "boolean" },
     "validations": [],
@@ -526,6 +594,7 @@
   },
   {
     "key": "test",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "boolean" },
     "validations": [],
@@ -533,6 +602,7 @@
   },
   {
     "key": "test",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "boolean" },
     "validations": [],
@@ -540,6 +610,7 @@
   },
   {
     "key": "test",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "boolean" },
     "validations": [],
@@ -547,6 +618,7 @@
   },
   {
     "key": "test",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "boolean" },
     "validations": [],
@@ -554,6 +626,7 @@
   },
   {
     "key": "test",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "boolean" },
     "validations": [],
@@ -561,6 +634,7 @@
   },
   {
     "key": "test",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "boolean" },
     "validations": [],
@@ -568,6 +642,7 @@
   },
   {
     "key": "test",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "boolean" },
     "validations": [],
@@ -575,6 +650,7 @@
   },
   {
     "key": "test",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "boolean" },
     "validations": [],
@@ -582,6 +658,7 @@
   },
   {
     "key": "test",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "boolean" },
     "validations": [],
@@ -589,6 +666,7 @@
   },
   {
     "key": "test",
+    "namespace": "custom",
     "description": "",
     "type": { "name": "boolean" },
     "validations": [],
