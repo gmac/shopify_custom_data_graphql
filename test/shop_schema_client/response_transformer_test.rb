@@ -29,6 +29,66 @@ describe "ResponseTransformer" do
     assert_equal expected, result.dig("data")
   end
 
+  def test_transforms_extensions_value_object_fields
+    result = fetch("transforms_extensions_value_object_fields", %|query {
+      product(id: "#{PRODUCT_ID}") {
+        id
+        extensions {
+          dimension { unit value }
+          rating { maximum: max value }
+        }
+      }
+    }|)
+
+    expected = {
+      "product" => {
+        "id" => PRODUCT_ID,
+        "extensions" => {
+          "dimension" => {
+            "unit" => "INCHES",
+            "value" => 24.0,
+          },
+          "rating" => {
+            "maximum" => 5.0,
+            "value" => 5.0,
+          },
+        },
+      },
+    }
+
+    assert_equal expected, result.dig("data")
+  end
+
+  def test_transforms_extensions_reference_fields
+    result = fetch("transforms_extensions_reference_fields", %|query {
+      product(id: "#{PRODUCT_ID}") {
+        id
+        extensions {
+          fileReference { id alt }
+          productReference { id title }
+        }
+      }
+    }|)
+
+    expected = {
+      "product" => {
+        "id" => PRODUCT_ID,
+        "extensions" => {
+          "fileReference" => {
+            "id" => "gid://shopify/MediaImage/20354823356438",
+            "alt" => "",
+          },
+          "productReference" => {
+            "id" => "gid://shopify/Product/6561850556438",
+            "title" => "Aquanauts Crystal Explorer Sub",
+          },
+        },
+      },
+    }
+
+    assert_equal expected, result.dig("data")
+  end
+
   private
 
   def fetch(fixture, document, variables: {}, operation_name: nil, schema: nil)

@@ -1,10 +1,5 @@
 # frozen_string_literal: true
 
-require_relative "schema_composer/metafield_definition"
-require_relative "schema_composer/metaobject_definition"
-require_relative "schema_composer/metaobject_union"
-require_relative "schema_composer/metatypes_catalog"
-
 module ShopSchemaClient
   class SchemaComposer
     class MetafieldDirective < GraphQL::Schema::Directive
@@ -40,8 +35,6 @@ module ShopSchemaClient
       end
 
       metaobject_queries = @catalog.metaobject_definitions.each_with_object({}) do |metaobject_def, memo|
-        next if metaobject_def.type.start_with?("app--")
-
         metaobject_type = build_metaobject(metaobject_def)
         connection_type = build_connection_type(metaobject_type)
         memo[metaobject_def] = connection_type
@@ -238,7 +231,7 @@ module ShopSchemaClient
         description(metaobject_def.description)
         field(:id, builder.schema_types["ID"], null: false)
         field(:handle, builder.schema_types["String"], null: false)
-        # @todo -> make `system` surface the raw Metaobject for access to updatedAt, etc.
+        field(:system, builder.schema_types["Metaobject"], null: false)
 
         metaobject_def.fields.each do |metafield_def|
           if RESERVED_METAOBJECT_KEYS.include?(metafield_def.key)

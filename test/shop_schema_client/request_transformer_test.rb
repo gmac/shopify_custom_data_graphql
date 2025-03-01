@@ -17,6 +17,7 @@ describe "RequestTransformer" do
     expected_query = %|query {
       product(id: "1") {
         title
+        extensions: __typename
         ___extensions_boolean: metafield(key: "custom.boolean") { jsonValue }
         ___extensions_color: metafield(key: "custom.color") { jsonValue }
       }
@@ -25,7 +26,7 @@ describe "RequestTransformer" do
     expected_transforms = {
       "f" => {
         "extensions" => {
-          "fx" => { "t" => "extensions_scope" },
+          "fx" => { "t" => "custom_scope" },
           "f" => {
             "boolean" => { "fx" => { "t" => "boolean" } },
             "color" => { "fx" => { "t" => "color" } },
@@ -52,6 +53,7 @@ describe "RequestTransformer" do
     expected_query = %|query {
       product(id: "1") {
         title
+        extensions: __typename
         ___extensions_dimension: metafield(key: "custom.dimension") { jsonValue }
         ___extensions_rating: metafield(key: "custom.rating") { jsonValue }
       }
@@ -60,7 +62,7 @@ describe "RequestTransformer" do
     expected_transforms = {
       "f" => {
         "extensions" => {
-          "fx" => { "t" => "extensions_scope" },
+          "fx" => { "t" => "custom_scope" },
           "f" => {
             "dimension" => { "fx" => { "t" => "dimension", "s" => ["unit", "value"] } },
             "rating" => { "fx" => { "t" => "rating", "s" => ["maximum:max", "value"] } },
@@ -87,6 +89,7 @@ describe "RequestTransformer" do
     expected_query = %|query {
       product(id: "1") {
         title
+        extensions: __typename
         ___extensions_fileReference: metafield(key: "custom.file_reference") {
           reference { ... on File { id alt } }
         }
@@ -99,7 +102,7 @@ describe "RequestTransformer" do
     expected_transforms = {
       "f" => {
         "extensions" => {
-          "fx" => { "t" => "extensions_scope" },
+          "fx" => { "t" => "custom_scope" },
           "f" => {
             "fileReference" => { "fx" => { "t" => "file_reference" } },
             "productReference" => { "fx" => { "t" => "product_reference" } },
@@ -130,6 +133,7 @@ describe "RequestTransformer" do
     expected_query = %|query {
       product(id: "1") {
         title
+        extensions: __typename
         ___extensions_fileReferenceList: metafield(key: "custom.file_reference_list") {
           references(first: 10, after: "r2d2") {
             nodes { ... on File { id alt } }
@@ -146,7 +150,7 @@ describe "RequestTransformer" do
     expected_transforms = {
       "f" => {
         "extensions" => {
-          "fx" => { "t" => "extensions_scope" },
+          "fx" => { "t" => "custom_scope" },
           "f" => {
             "fileReferenceList" => { "fx" => { "t" => "list.file_reference" } },
             "productReferenceList" => { "fx" => { "t" => "list.product_reference" } },
@@ -170,6 +174,7 @@ describe "RequestTransformer" do
     expected_query = %|query {
       product(id: "1") {
         __typename
+        extensions: __typename
         ___extensions___typename: __typename
       }
     }|
@@ -177,7 +182,7 @@ describe "RequestTransformer" do
     expected_transforms = {
       "f" => {
         "extensions" => {
-          "fx" => { "t" => "extensions_scope" },
+          "fx" => { "t" => "custom_scope" },
           "f" => {
             "__typename" => { "fx" => { "t" => "static_typename", "v" => "ProductExtensions" } },
           },
@@ -208,10 +213,12 @@ describe "RequestTransformer" do
     expected_query = %|query {
       product(id: "1") {
         title
+        extensions: __typename
         ___extensions_productReference: metafield(key: "custom.product_reference") {
           reference {
             ... on Product {
               title
+              extensions: __typename
               ___extensions_boolean: metafield(key: "custom.boolean") { jsonValue }
               ___extensions_color: metafield(key: "custom.color") { jsonValue }
             }
@@ -223,13 +230,13 @@ describe "RequestTransformer" do
     expected_transforms = {
       "f" => {
         "extensions" => {
-          "fx" => { "t" => "extensions_scope" },
+          "fx" => { "t" => "custom_scope" },
           "f" => {
             "productReference" => {
               "fx" => { "t" => "product_reference" },
               "f" => {
                 "extensions" => {
-                  "fx" => { "t" => "extensions_scope" },
+                  "fx" => { "t" => "custom_scope" },
                   "f" => {
                     "boolean" => { "fx" => { "t" => "boolean" } },
                     "color" => { "fx" => { "t" => "color" } },
@@ -263,8 +270,10 @@ describe "RequestTransformer" do
     expected_query = %|query {
       product(id: "1") {
         title
+        extensions1: __typename
         ___extensions1_myBoolean: metafield(key: "custom.boolean") { jsonValue }
         ___extensions1_myTypename: __typename
+        extensions2: __typename
         ___extensions2_myColor: metafield(key: "custom.color") { jsonValue }
       }
     }|
@@ -272,14 +281,14 @@ describe "RequestTransformer" do
     expected_transforms = {
       "f" => {
         "extensions1" => {
-          "fx" => { "t" => "extensions_scope" },
+          "fx" => { "t" => "custom_scope" },
           "f" => {
             "myBoolean" => { "fx" => { "t" => "boolean" } },
             "myTypename" => { "fx" => { "t" => "static_typename", "v" => "ProductExtensions" } },
           },
         },
         "extensions2" => {
-          "fx" => { "t" => "extensions_scope" },
+          "fx" => { "t" => "custom_scope" },
           "f" => {
             "myColor" => { "fx" => { "t" => "color" } },
           },
@@ -315,6 +324,7 @@ describe "RequestTransformer" do
 
     expected_query = %|query {
       product(id: "1") {
+      extensions: __typename
         ___extensions_widget: metafield(key: "custom.widget") {
           reference {
             ... on Metaobject {
@@ -329,7 +339,7 @@ describe "RequestTransformer" do
     expected_transforms = {
       "f" => {
         "extensions" => {
-          "fx" => { "t" => "extensions_scope" },
+          "fx" => { "t" => "custom_scope" },
           "f" => {
             "widget" => {
               "fx" => { "t" => "metaobject_reference" },
@@ -361,6 +371,7 @@ describe "RequestTransformer" do
 
     expected_query = %|query {
       product(id: "1") {
+        extensions: __typename
         ___extensions_widget: metafield(key: "custom.widget") {
           reference {
             ... on Metaobject {
@@ -375,7 +386,7 @@ describe "RequestTransformer" do
     expected_transforms = {
       "f" => {
         "extensions" => {
-          "fx" => { "t" => "extensions_scope" },
+          "fx" => { "t" => "custom_scope" },
           "f" => {
             "widget" => {
               "fx" => { "t" => "metaobject_reference" },
@@ -407,6 +418,7 @@ describe "RequestTransformer" do
 
     expected_query = %|query {
       product(id: "1") {
+        extensions: __typename
         ___extensions_widget: metafield(key: "custom.widget") {
           reference {
             ... on Metaobject {
@@ -425,7 +437,7 @@ describe "RequestTransformer" do
     expected_transforms = {
       "f" => {
         "extensions" => {
-          "fx" => { "t" => "extensions_scope" },
+          "fx" => { "t" => "custom_scope" },
           "f" => {
             "widget" => {
               "fx" => { "t" => "metaobject_reference" },
@@ -461,6 +473,7 @@ describe "RequestTransformer" do
 
     expected_query = %|query {
       product(id: "1") {
+        extensions: __typename
         ___extensions_widget: metafield(key: "custom.widget") {
           reference {
             ... on Metaobject {
@@ -483,7 +496,7 @@ describe "RequestTransformer" do
     expected_transforms = {
       "f" => {
         "extensions" => {
-          "fx" => { "t" => "extensions_scope" },
+          "fx" => { "t" => "custom_scope" },
           "f" => {
             "widget" => {
               "fx" => { "t" => "metaobject_reference" },
@@ -512,6 +525,7 @@ describe "RequestTransformer" do
 
     expected_query = %|query {
       product(id: "1") {
+        extensions: __typename
         ___extensions_widget: metafield(key: "custom.widget") {
           reference { ... on Metaobject { __typename: type } }
         }
@@ -521,7 +535,7 @@ describe "RequestTransformer" do
     expected_transforms = {
       "f" => {
         "extensions" => {
-          "fx" => { "t" => "extensions_scope" },
+          "fx" => { "t" => "custom_scope" },
           "f" => {
             "widget" => {
               "fx" => { "t" => "metaobject_reference" },
@@ -554,6 +568,7 @@ describe "RequestTransformer" do
 
     expected_query = %|query {
       product(id: "1") {
+        extensions: __typename
         ___extensions_widget: metafield(key: "custom.widget") {
           reference {
             ... on Metaobject {
@@ -574,7 +589,7 @@ describe "RequestTransformer" do
     expected_transforms = {
       "f" => {
         "extensions" => {
-          "fx" => { "t" => "extensions_scope" },
+          "fx" => { "t" => "custom_scope" },
           "f" => {
             "widget" => {
               "fx" => { "t" => "metaobject_reference" },
@@ -612,6 +627,7 @@ describe "RequestTransformer" do
 
     expected_query = %|query {
       product(id: "1") {
+        extensions: __typename
         ___extensions_widget: metafield(key: "custom.widget") {
           reference {
             ... on Metaobject {
@@ -627,7 +643,7 @@ describe "RequestTransformer" do
     expected_transforms = {
       "f" => {
         "extensions" => {
-          "fx" => { "t" => "extensions_scope" },
+          "fx" => { "t" => "custom_scope" },
           "f" => {
             "widget" => {
               "fx" => { "t" => "metaobject_reference" },
@@ -661,6 +677,7 @@ describe "RequestTransformer" do
 
     expected_query = %|query {
       product(id: "1") {
+        extensions: __typename
         ___extensions_widget: metafield(key: "custom.widget") {
           reference {
             ... on Metaobject {
@@ -676,7 +693,7 @@ describe "RequestTransformer" do
     expected_transforms = {
       "f" => {
         "extensions" => {
-          "fx" => { "t" => "extensions_scope" },
+          "fx" => { "t" => "custom_scope" },
           "f" => {
             "widget" => {
               "fx" => { "t" => "metaobject_reference" },
@@ -710,6 +727,7 @@ describe "RequestTransformer" do
 
     expected_query = %|query {
       product(id: "1") {
+        extensions: __typename
         ___extensions_rating: metafield(key: "custom.rating") { jsonValue }
         ___extensions_rating: metafield(key: "custom.rating") { jsonValue }
       }
@@ -718,7 +736,7 @@ describe "RequestTransformer" do
     expected_transforms = {
       "f" => {
         "extensions" => {
-          "fx" => { "t" => "extensions_scope" },
+          "fx" => { "t" => "custom_scope" },
           "f" => {
             "rating" => { "fx" => { "t" => "rating", "s" => ["max", "min", "value"] } },
           },
@@ -756,6 +774,7 @@ describe "RequestTransformer" do
 
     expected_query = %|query {
       product(id: "1") {
+        extensions: __typename
         ___extensions_rating1: metafield(key: "custom.rating") { jsonValue }
         ___extensions_rating2: metafield(key: "custom.rating") { jsonValue }
       }
@@ -764,7 +783,7 @@ describe "RequestTransformer" do
     expected_transforms = {
       "f" => {
         "extensions" => {
-          "fx" => { "t" => "extensions_scope" },
+          "fx" => { "t" => "custom_scope" },
           "f" => {
             "rating1" => { "fx" => { "t" => "rating", "s" => ["max", "min", "value"] } },
             "rating2" => { "fx" => { "t" => "rating", "s" => ["max", "min", "value"] } },
@@ -777,7 +796,7 @@ describe "RequestTransformer" do
     assert_equal expected_transforms, result.as_json["transforms"].dig("f", "product")
   end
 
-  def test_transforms_fragments_on_extensions_scope
+  def test_transforms_fragments_on_custom_scope
     result = transform_request(%|query {
       product(id: "1") {
         extensions {
@@ -791,6 +810,7 @@ describe "RequestTransformer" do
 
     expected_query = %|query {
       product(id: "1") {
+        extensions: __typename
         ___extensions_boolean: metafield(key: "custom.boolean") { jsonValue }
         ...ProductExtensionsAttrs
       }
@@ -802,7 +822,7 @@ describe "RequestTransformer" do
     expected_transforms = {
       "f" => {
         "extensions" => {
-          "fx" => { "t" => "extensions_scope" },
+          "fx" => { "t" => "custom_scope" },
           "f" => {
             "boolean" => { "fx" => { "t" => "boolean" } },
             "color" => { "fx" => { "t" => "color" } },
@@ -835,10 +855,12 @@ describe "RequestTransformer" do
         ... on Node { id }
         ... on Product {
           title
+          productExt: __typename
           ___productExt_boolean: metafield(key: "custom.boolean") { jsonValue }
         }
         ... on ProductVariant {
           title
+          variantExt: __typename
           ___variantExt_test: metafield(key: "custom.test") { jsonValue }
         }
         ___typehint: __typename
@@ -851,7 +873,7 @@ describe "RequestTransformer" do
           "Product" => {
             "f" => {
               "productExt" => {
-                "fx" => { "t" => "extensions_scope" },
+                "fx" => { "t" => "custom_scope" },
                 "f" => {
                   "boolean" => { "fx" => { "t" => "boolean" } },
                 },
@@ -861,7 +883,7 @@ describe "RequestTransformer" do
           "ProductVariant" => {
             "f" => {
               "variantExt" => {
-                "fx" => { "t" => "extensions_scope" },
+                "fx" => { "t" => "custom_scope" },
                 "f" => {
                   "test" => { "fx" => { "t" => "boolean" } },
                 },
@@ -903,10 +925,12 @@ describe "RequestTransformer" do
     }
     fragment ProductAttrs on Product {
       title
+      productExt: __typename
       ___productExt_boolean: metafield(key: "custom.boolean") { jsonValue }
     }
     fragment VariantAttrs on ProductVariant {
       title
+      variantExt: __typename
       ___variantExt_test: metafield(key: "custom.test") { jsonValue }
     }|
 
@@ -916,7 +940,7 @@ describe "RequestTransformer" do
           "Product" => {
             "f" => {
               "productExt" => {
-                "fx" => { "t" => "extensions_scope" },
+                "fx" => { "t" => "custom_scope" },
                 "f" => {
                   "boolean" => { "fx" => { "t" => "boolean" } },
                 },
@@ -926,7 +950,7 @@ describe "RequestTransformer" do
           "ProductVariant" => {
             "f" => {
               "variantExt" => {
-                "fx" => { "t" => "extensions_scope" },
+                "fx" => { "t" => "custom_scope" },
                 "f" => {
                   "test" => { "fx" => { "t" => "boolean" } },
                 },
@@ -956,6 +980,7 @@ describe "RequestTransformer" do
 
     expected_query = %|query {
       product(id: "1") {
+        extensions: __typename
         ___extensions_mixedReference: metafield(key: "custom.mixed_reference") {
           reference {
             ... on Metaobject {
@@ -978,7 +1003,7 @@ describe "RequestTransformer" do
     expected_transforms = {
       "f" => {
         "extensions" => {
-          "fx" => { "t" => "extensions_scope" },
+          "fx" => { "t" => "custom_scope" },
           "f" => {
             "mixedReference" => {
               "fx" => { "t" => "mixed_reference" },
@@ -1026,6 +1051,7 @@ describe "RequestTransformer" do
     }|)
 
     expected_query = %|query {
+      extensions: __typename
       ___extensions_widgetMetaobjects: metaobjects(first: 10, type: "widget") {
         nodes {
           id
@@ -1038,7 +1064,7 @@ describe "RequestTransformer" do
     expected_transforms = {
       "f" => {
         "extensions" => {
-          "fx" => { "t" => "extensions_scope" },
+          "fx" => { "t" => "custom_scope" },
           "f" => {
             "widgetMetaobjects" => {
               "f" => {
@@ -1057,6 +1083,61 @@ describe "RequestTransformer" do
 
     assert_equal expected_query.squish, result.as_json["query"].squish
     assert_equal expected_transforms, result.as_json["transforms"]
+  end
+
+  def test_transforms_metaobject_system_extensions
+    result = transform_request(%|query {
+      extensions {
+        widgetMetaobjects(first: 10) {
+          nodes {
+            id
+            handle
+            system {
+              createdByStaff { id }
+              updatedAt
+            }
+            boolean
+          }
+        }
+      }
+    }|)
+
+    expected_query = %|query {
+      extensions: __typename
+      ___extensions_widgetMetaobjects: metaobjects(first: 10, type: "widget") {
+        nodes {
+          id
+          handle
+          system: __typename
+          ___system_createdByStaff: createdByStaff { id }
+          ___system_updatedAt: updatedAt
+          boolean: field(key: "boolean") { jsonValue }
+        }
+      }
+    }|
+
+    expected_transforms = {
+      "f" => {
+        "extensions" => {
+          "fx" => { "t" => "custom_scope" },
+          "f" => {
+            "widgetMetaobjects" => {
+              "f" => {
+                "nodes" => {
+                  "f" => {
+                    "system" => { "fx" => { "t" => "custom_scope" } },
+                    "boolean" => { "fx" => { "t" => "boolean" } },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    }
+
+    assert_equal expected_query.squish, result.as_json["query"].squish
+    # assert_equal expected_transforms, result.as_json["transforms"]
   end
 
   private

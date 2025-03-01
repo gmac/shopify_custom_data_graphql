@@ -20,14 +20,14 @@ module ShopSchemaClient
         fields.each do |field_name, next_map|
           field_transform = next_map["fx"]
 
-          if field_transform && field_transform["t"] == RequestTransformer::EXTENSIONS_SCOPE_TRANSFORM
-            expand_extensions(object_value, field_name)
+          if field_transform && field_transform["t"] == RequestTransformer::CUSTOM_SCOPE_TRANSFORM
+            expand_custom_scope(object_value, field_name)
           end
 
           next_value = object_value[field_name]
           next if next_value.nil?
 
-          if field_transform && field_transform["t"] != RequestTransformer::EXTENSIONS_SCOPE_TRANSFORM
+          if field_transform && field_transform["t"] != RequestTransformer::CUSTOM_SCOPE_TRANSFORM
             next_value = object_value[field_name] = transform_field_value(next_value, field_transform)
           end
 
@@ -43,9 +43,7 @@ module ShopSchemaClient
       if (possible_types = current_map["if"])
         actual_type = object_value[RequestTransformer::TYPENAME_HINT]
         possible_types.each do |possible_type, next_map|
-          next unless possible_type == actual_type || possible_type.split("|").include?(actual_type)
-
-          transform_object_scope(object_value, next_map)
+          transform_object_scope(object_value, next_map) if possible_type == actual_type
         end
 
         object_value.delete(RequestTransformer::TYPENAME_HINT)
@@ -77,18 +75,18 @@ module ShopSchemaClient
       end
     end
 
-    def expand_extensions(object_value, extensions_ns)
-      extensions_scope = {}
-      extensions_prefix = "#{RequestTransformer::RESERVED_PREFIX}#{extensions_ns}_"
+    def expand_custom_scope(object_value, scope_ns)
+      scope = {}
+      scope_prefix = "#{RequestTransformer::RESERVED_PREFIX}#{scope_ns}_"
 
       object_value.reject! do |key, value|
-        next false unless key.start_with?(extensions_prefix)
+        next false unless key.start_with?(scope_prefix)
 
-        extensions_scope[key.sub(extensions_prefix, "")] = value
+        scope[key.sub(scope_prefix, "")] = value
         true
       end
 
-      object_value[extensions_ns] = extensions_scope
+      object_value[scope_ns] = scope
     end
   end
 end

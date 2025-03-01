@@ -8,7 +8,7 @@ module ShopSchemaClient
     GQL_TYPENAME = "__typename"
     RESERVED_PREFIX = "___"
     TYPENAME_HINT = "#{RESERVED_PREFIX}typehint"
-    EXTENSIONS_SCOPE_TRANSFORM = "extensions_scope"
+    CUSTOM_SCOPE_TRANSFORM = "custom_scope"
     EXTENSIONS_SCOPE = :extensions
     METAOBJECT_SCOPE = :metaobject
     NATIVE_SCOPE = :native
@@ -42,18 +42,30 @@ module ShopSchemaClient
           end
 
           @transform_map.field_breadcrumb(node) do
-            if scope_type == EXTENSIONS_SCOPE && parent_type.graphql_name == @root_ext_name
+            if scope_type == NATIVE_SCOPE && node.name == "extensions" && (parent_type == @schema.query || @owner_types.include?(parent_type))
+              @transform_map.apply_field_transform(FieldTransform.new(CUSTOM_SCOPE_TRANSFORM))
+              custom_scope(node) do
+                next_type = parent_type.get_field(node.name).type.unwrap
+                transform_scope(next_type, node.selections, scope_type: EXTENSIONS_SCOPE, scope_ns: node.alias || node.name)
+              end
+            elsif scope_type == METAOBJECT_SCOPE && node.name == "system"
+              @transform_map.apply_field_transform(FieldTransform.new(CUSTOM_SCOPE_TRANSFORM))
+              custom_scope(node) do
+                next_type = parent_type.get_field(node.name).type.unwrap
+                transform_scope(next_type, node.selections, scope_ns: node.alias || node.name)
+              end
+            elsif scope_type == EXTENSIONS_SCOPE && parent_type.graphql_name == @root_ext_name
               build_metaobject_query(parent_type, node, scope_ns: scope_ns)
             elsif scope_type == EXTENSIONS_SCOPE || scope_type == METAOBJECT_SCOPE
               build_metafield(parent_type, node, scope_type: scope_type, scope_ns: scope_ns)
-            elsif scope_type == NATIVE_SCOPE && node.name == "extensions" && (parent_type == @schema.query || @owner_types.include?(parent_type))
-              next_type = parent_type.get_field(node.name).type.unwrap
-              @transform_map.apply_field_transform(FieldTransform.new(EXTENSIONS_SCOPE_TRANSFORM))
-              transform_scope(next_type, node.selections, scope_type: EXTENSIONS_SCOPE, scope_ns: node.alias || node.name)
-            elsif node.selections&.any?
-              next_type = parent_type.get_field(node.name).type.unwrap
-              node.merge(selections: transform_scope(next_type, node.selections))
             else
+              if scope_ns
+                node = node.merge(alias: "#{RESERVED_PREFIX}#{scope_ns}_#{node.alias || node.name}")
+              end
+              if node.selections&.any?
+                next_type = parent_type.get_field(node.name).type.unwrap
+                node = node.merge(selections: transform_scope(next_type, node.selections))
+              end
               node
             end
           end
@@ -104,6 +116,14 @@ module ShopSchemaClient
       end
 
       compact_typehints(results)
+      results
+    end
+
+    def custom_scope(node)
+      selections = Array.wrap(yield)
+      # custom scopes prepend a placeholder to reserve their position in the final selection order
+      selections.prepend(GraphQL::Language::Nodes::Field.new(field_alias: node.alias || node.name, name: GQL_TYPENAME))
+      selections
     end
 
     def typed_scope(parent_type, fragment_type, scope_type)

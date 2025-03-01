@@ -129,7 +129,7 @@ While transforming the request shape, a small JSON mapping is also generated to 
     "product": {
       "f": {
         "extensions": {
-          "fx": { "t": "extensions_scope" },
+          "fx": { "t": "custom_scope" },
           "f": {
             "similarProduct": {
               "fx": { "t": "product_reference" }

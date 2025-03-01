@@ -19,19 +19,14 @@ def load_base_admin_schema
 end
 
 def load_shop_fixtures_catalog
-  data = JSON.parse(File.read("#{__dir__}/fixtures/metaobjects.json"))
-  metaobjects = data.map do |metaobject_def|
-    ShopSchemaClient::SchemaComposer::MetaobjectDefinition.from_graphql(metaobject_def)
-  end
+  catalog = ShopSchemaClient::SchemaCatalog.new
 
   data = JSON.parse(File.read("#{__dir__}/fixtures/metafields.json"))
-  metafields = data.map do |metafield_def|
-    ShopSchemaClient::SchemaComposer::MetafieldDefinition.from_graphql(metafield_def)
-  end
+  data.each { catalog.add_metafield(_1) }
 
-  catalog = ShopSchemaClient::SchemaComposer::MetatypesCatalog.new
-  catalog.add_metaobjects(metaobjects)
-  catalog.add_metafields(metafields)
+  data = JSON.parse(File.read("#{__dir__}/fixtures/metaobjects.json"))
+  data.each { catalog.add_metaobject(_1) }
+
   catalog
 end
 
@@ -41,7 +36,7 @@ end
 
 $base_schema = nil
 $shop_schema = nil
-$shop_secrets = nil
+$shop_api_client = nil
 $metafield_values = nil
 
 def base_schema
@@ -56,25 +51,21 @@ def metafield_values
   $metafield_values ||= JSON.parse(File.read("#{__dir__}/fixtures/metafield_values.json"))
 end
 
+def shop_api_client
+  $shop_api_client ||= begin
+    secrets = JSON.parse(File.read("#{__dir__}/../secrets.json"))
+    ShopSchemaClient::AdminApiClient.new(
+      shop_url: secrets["shop_url"],
+      access_token: secrets["access_token"],
+    )
+  end
+end
+
 def fetch_response(casette_name, query, version: "2025-01", variables: nil)
   file_path = "#{__dir__}/fixtures/casettes/#{casette_name}.json"
   JSON.parse(File.read(file_path))
 rescue Errno::ENOENT
-  $shop_secrets ||= JSON.parse(File.read("#{__dir__}/../secrets.json"))
-  response = ::Net::HTTP.post(
-    URI("#{$shop_secrets["shop_url"]}/admin/api/#{version}/graphql"),
-    JSON.generate({
-      "query" => query,
-      "variables" => variables,
-    }),
-    {
-      "X-Shopify-Access-Token" => $shop_secrets["access_token"],
-      "Content-Type" => "application/json",
-      "Accept" => "application/json",
-    },
-  )
-
-  data = JSON.parse(response.body)
+  data = shop_api_client.fetch(query, variables: variables)
   data.delete("extensions")
   File.write(file_path, JSON.pretty_generate(data))
   data

@@ -2,59 +2,25 @@
 
 require 'puma'
 require 'rackup'
-require "net/http"
-require "uri"
 require 'json'
 require 'graphql'
 require_relative '../lib/shop_schema_client'
 
-SCHEMA_QUERY = %|
-  query {
-    metaobjectDefinitions(first: 250) {
-      nodes {
-        id
-        description
-        name
-        type
-        fieldDefinitions {
-          key
-          description
-          required
-          type { name }
-          validations {
-            name
-            value
-          }
-        }
-      }
-    }
-    product_metafields: metafieldDefinitions(first: 250, ownerType: PRODUCT) {
-      nodes { ...MetafieldAttrs }
-    }
-    # product_variant_metafields: metafieldDefinitions(first: 250, ownerType: PRODUCTVARIANT) {
-    #   nodes { ...MetafieldAttrs }
-    # }
-    collection_metafields: metafieldDefinitions(first: 250, ownerType: COLLECTION) {
-      nodes { ...MetafieldAttrs }
-    }
-  }
-  fragment MetafieldAttrs on MetafieldDefinition {
-    id
-    key
-    description
-    type { name }
-    validations {
-      name
-      value
-    }
-    ownerType
-  }
-|
-
 class App
   def initialize
     @graphiql = File.read("#{__dir__}/graphiql.html")
-    @secrets = JSON.parse(File.read("#{__dir__}/secrets.json"))
+
+    secrets = JSON.parse(
+      File.exist?("#{__dir__}/secrets.json") ?
+      File.read("#{__dir__}/secrets.json") :
+      File.read("#{__dir__}/../secrets.json")
+    )
+
+    @client = ShopSchemaClient::AdminApiClient.new(
+      shop_url: secrets["shop_url"],
+      access_token: secrets["access_token"],
+    )
+
     reload_shop_schema
   end
 
@@ -85,49 +51,20 @@ class App
     end
   end
 
-  def shop_request(query, variables = nil)
-    response = ::Net::HTTP.post(
-      URI("#{@secrets["shop_url"]}/admin/api/2025-01/graphql"),
-      JSON.generate({
-        "query" => query,
-        "variables" => variables,
-      }),
-      {
-        "X-Shopify-Access-Token" => @secrets["access_token"],
-        "Content-Type" => "application/json",
-        "Accept" => "application/json",
-      },
-    )
-
-    JSON.parse(response.body)
-  end
-
   def reload_shop_schema
-    base_sdl = File.read("#{__dir__}/../test/fixtures/admin_2025_01_public.graphql")
-    base_schema = GraphQL::Schema.from_definition(base_sdl)
-
-    # load in metaobject definitions and product metafields...
-    result = shop_request(SCHEMA_QUERY)
-    metaobjects = result.dig("data", "metaobjectDefinitions", "nodes").map do |metaobject_def|
-      ShopSchemaClient::SchemaComposer::MetaobjectDefinition.from_graphql(metaobject_def)
+    start = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+    base_schema = duration("Built base schema") do
+      base_sdl = File.read("#{__dir__}/../test/fixtures/admin_2025_01_public.graphql")
+      GraphQL::Schema.from_definition(base_sdl)
     end
 
-    metafields = []
-    result["data"].each do |key, conn_data|
-      next unless key.end_with?("_metafields")
-
-      conn_data["nodes"].each do |metafield_def|
-        metafields << ShopSchemaClient::SchemaComposer::MetafieldDefinition.from_graphql(metafield_def)
-      end
+    catalog = duration("Loaded catalog") do
+      ShopSchemaClient::SchemaCatalog.new.load(@client)
     end
 
-    catalog = ShopSchemaClient::SchemaComposer::MetatypesCatalog.new
-    catalog.add_metaobjects(metaobjects)
-    catalog.add_metafields(metafields)
-
-    # build them into a composed shop schema...
-    @shop_schema = ShopSchemaClient::SchemaComposer.new(base_schema, catalog).perform
-    puts "Shop schema loaded!"
+    @shop_schema = duration("Composed schema") do
+      ShopSchemaClient::SchemaComposer.new(base_schema, catalog).perform
+    end
   end
 
   def serve_shop_request(query)
@@ -140,11 +77,19 @@ class App
       shop_query = ShopSchemaClient::RequestTransformer.new(query).perform
       shop_query.perform do |query_string|
         puts query_string
-        shop_request(query_string, query.variables.to_h)
+        @client.fetch(query_string, variables: query.variables.to_h)
       end
     end
   rescue ShopSchemaClient::ValidationError => e
     { errors: [{ message: e.message }] }
+  end
+
+  def duration(action)
+    start = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+    result = yield
+    duration = Process.clock_gettime(Process::CLOCK_MONOTONIC) - start
+    puts "#{action} in #{duration}s"
+    result
   end
 end
 
