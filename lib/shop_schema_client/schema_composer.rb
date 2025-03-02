@@ -11,17 +11,23 @@ module ShopSchemaClient
 
     class MetaobjectDirective < GraphQL::Schema::Directive
       graphql_name "metaobject"
-      locations FIELD_DEFINITION
+      locations OBJECT
       argument :type, String, required: true
     end
 
-    attr_reader :schema_types
+    class AppDirective < GraphQL::Schema::Directive
+      graphql_name "app"
+      locations SCHEMA
+      argument :id, Int, required: true
+    end
+
+    attr_reader :catalog, :schema_types
 
     def initialize(base_schema, catalog)
       @base_schema = base_schema
       @catalog = catalog
 
-      introspection_names = @base_schema.introspection_system.types.keys
+      introspection_names = @base_schema.introspection_system.types.keys.to_set
       @schema_types = @base_schema.types.reject! { |k, v| introspection_names.include?(k) }
       @metaobject_unions = {}
     end
@@ -53,6 +59,12 @@ module ShopSchemaClient
       Class.new(GraphQL::Schema) do
         use(GraphQL::Schema::Visibility)
         directive(MetafieldDirective)
+        directive(MetaobjectDirective)
+        if (app_id = builder.catalog.app_id)
+          directive(AppDirective)
+          schema_directive(AppDirective, id: app_id)
+        end
+
         add_type_and_traverse(builder.schema_types.values, root: false)
         orphan_types(builder.schema_types.values.select { |t| t.respond_to?(:kind) && t.kind.object? })
         query(builder.schema_types[query_name])
@@ -172,7 +184,6 @@ module ShopSchemaClient
               description: "A paginated list of `#{metaobject_def.typename}` items.",
               connection: false,
             ) do |f|
-              f.directive(MetaobjectDirective, type: metaobject_def.type)
               f.argument(:first, builder.schema_types["Int"], required: false)
               f.argument(:last, builder.schema_types["Int"], required: false)
               f.argument(:before, builder.schema_types["String"], required: false)
@@ -228,7 +239,8 @@ module ShopSchemaClient
       builder = self
       @schema_types[metaobject_def.typename] ||= Class.new(GraphQL::Schema::Object) do
         graphql_name(metaobject_def.typename)
-        description(metaobject_def.description)
+        description(metaobject_def.description) unless metaobject_def.description.blank?
+        directive(MetaobjectDirective, type: metaobject_def.type)
         field(:id, builder.schema_types["ID"], null: false)
         field(:handle, builder.schema_types["String"], null: false)
         field(:system, builder.schema_types["Metaobject"], null: false)
@@ -256,12 +268,13 @@ module ShopSchemaClient
       builder = self
       type = type_for_metafield_definition(metafield_def)
       owner.field(
-        metafield_def.key.to_sym,
+        metafield_def.schema_key.to_sym,
         type,
-        description: metafield_def.description,
-        connection: false, # don't automatically build connection configuration
+        connection: false,
+        camelize: false,
       ) do |f|
-        f.directive(MetafieldDirective, key: metafield_def.key, type: metafield_def.type)
+        f.directive(MetafieldDirective, key: metafield_def.reference_key, type: metafield_def.type)
+        f.description(metafield_def.description) unless metafield_def.description.blank?
         if MetafieldTypeResolver.connection_type?(type.unwrap.graphql_name)
           f.argument(:first, builder.schema_types["Int"], required: false)
           f.argument(:last, builder.schema_types["Int"], required: false)

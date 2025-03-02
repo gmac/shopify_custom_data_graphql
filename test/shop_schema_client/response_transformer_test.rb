@@ -89,6 +89,59 @@ describe "ResponseTransformer" do
     assert_equal expected, result.dig("data")
   end
 
+  def test_transforms_mixed_reference_with_matching_type_selection
+    result = fetch("mixed_reference_returning_taco", %|query {
+      product(id: "1") {
+        extensions {
+          mixedReference {
+            ... on TacoMetaobject { id name }
+            ... on TacoFillingMetaobject { id calories }
+            __typename
+          }
+        }
+      }
+    }|)
+
+    expected = {
+      "product" => {
+        "extensions" => {
+          "mixedReference" => {
+            "id" => "gid://shopify/Metaobject/1",
+            "name" => "Al Pastor",
+            "__typename" => "TacoMetaobject",
+          },
+        },
+      },
+    }
+
+    assert_equal expected, result.dig("data")
+  end
+
+  def test_transforms_mixed_reference_without_matching_type_selection
+    result = fetch("mixed_reference_returning_taco", %|query {
+      product(id: "1") {
+        extensions {
+          mixedReference {
+            ... on TacoFillingMetaobject { id calories }
+            __typename
+          }
+        }
+      }
+    }|)
+
+    expected = {
+      "product" => {
+        "extensions" => {
+          "mixedReference" => {
+            "__typename" => "TacoMetaobject",
+          },
+        },
+      },
+    }
+
+    assert_equal expected, result.dig("data")
+  end
+
   private
 
   def fetch(fixture, document, variables: {}, operation_name: nil, schema: nil)

@@ -2,6 +2,20 @@
 
 module ShopSchemaClient
   class SchemaCatalog
+    METAFIELD_GRAPHQL_ATTRS = %|
+      fragment MetafieldAttrs on MetafieldDefinition {
+        key
+        namespace
+        ownerType
+        description
+        type { name }
+        validations {
+          name
+          value
+        }
+      }
+    |
+
     MetafieldDefinition = Struct.new(
       :key,
       :type,
@@ -9,6 +23,7 @@ module ShopSchemaClient
       :description,
       :validations,
       :owner_type,
+      :schema_namespace,
       keyword_init: true
     ) do
       class << self
@@ -22,6 +37,14 @@ module ShopSchemaClient
             owner_type: metafield_def["ownerType"],
           )
         end
+      end
+
+      def reference_key
+        @reference_key ||= [namespace, key].tap(&:compact!).join(".")
+      end
+
+      def schema_key
+        @schema_key ||= [*(schema_namespace || []), key].map! { _1.camelize(:lower) }.join("_")
       end
 
       def list?

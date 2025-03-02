@@ -16,9 +16,10 @@ module ShopSchemaClient
     def initialize(query, metafield_ns = "custom")
       @query = query
       @schema = query.schema
-      @transform_map = TransformationMap.new
+      @app_context = directive_kwargs(@schema.schema_directives, "app")&.dig(:id)
       @owner_types = @schema.possible_types(@schema.get_type("HasMetafields")).to_set
       @root_ext_name = MetafieldTypeResolver.extensions_typename(@schema.query.graphql_name)
+      @transform_map = TransformationMap.new(@app_context)
       @metafield_ns = metafield_ns
       @new_fragments = {}
     end
@@ -44,13 +45,13 @@ module ShopSchemaClient
           @transform_map.field_breadcrumb(node) do
             if scope_type == NATIVE_SCOPE && node.name == "extensions" && (parent_type == @schema.query || @owner_types.include?(parent_type))
               @transform_map.apply_field_transform(FieldTransform.new(CUSTOM_SCOPE_TRANSFORM))
-              custom_scope(node) do
+              custom_scope_anchor(node) do
                 next_type = parent_type.get_field(node.name).type.unwrap
                 transform_scope(next_type, node.selections, scope_type: EXTENSIONS_SCOPE, scope_ns: node.alias || node.name)
               end
             elsif scope_type == METAOBJECT_SCOPE && node.name == "system"
               @transform_map.apply_field_transform(FieldTransform.new(CUSTOM_SCOPE_TRANSFORM))
-              custom_scope(node) do
+              custom_scope_anchor(node) do
                 next_type = parent_type.get_field(node.name).type.unwrap
                 transform_scope(next_type, node.selections, scope_ns: node.alias || node.name)
               end
@@ -72,7 +73,7 @@ module ShopSchemaClient
 
         when GraphQL::Language::Nodes::InlineFragment
           fragment_type = node.type.nil? ? parent_type : @schema.get_type(node.type.name)
-          typed_scope(parent_type, fragment_type, scope_type) do
+          typed_scope_condition(parent_type, fragment_type, scope_type) do
             if MetafieldTypeResolver.extensions_type?(fragment_type.graphql_name)
               transform_scope(fragment_type, node.selections, scope_type: EXTENSIONS_SCOPE, scope_ns: scope_ns)
             elsif MetafieldTypeResolver.metaobject_type?(fragment_type.graphql_name)
@@ -91,7 +92,7 @@ module ShopSchemaClient
         when GraphQL::Language::Nodes::FragmentSpread
           fragment_def = @query.fragments[node.name]
           fragment_type = @schema.get_type(fragment_def.type.name)
-          typed_scope(parent_type, fragment_type, scope_type) do
+          typed_scope_condition(parent_type, fragment_type, scope_type) do
             unless @new_fragments[node.name]
               fragment_type_name = fragment_type.graphql_name
               fragment_selections = if MetafieldTypeResolver.extensions_type?(fragment_type.graphql_name)
@@ -119,25 +120,25 @@ module ShopSchemaClient
       results
     end
 
-    def custom_scope(node)
+    def custom_scope_anchor(node)
       selections = Array.wrap(yield)
-      # custom scopes prepend a placeholder to reserve their position in the final selection order
+      # custom scopes prepend a placeholder field to anchor their position in the final selection order
       selections.prepend(GraphQL::Language::Nodes::Field.new(field_alias: node.alias || node.name, name: GQL_TYPENAME))
       selections
     end
 
-    def typed_scope(parent_type, fragment_type, scope_type)
-      parent_types = @schema.possible_types(parent_type).map(&:graphql_name)
-      fragment_types = @schema.possible_types(fragment_type).map(&:graphql_name)
+    def typed_scope_condition(parent_type, fragment_type, scope_type)
+      possible_types = @schema.possible_types(parent_type) & @schema.possible_types(fragment_type)
 
       if scope_type == NATIVE_SCOPE && parent_type.kind.abstract? && fragment_type != parent_type
-        @transform_map.type_breadcrumb(parent_types & fragment_types) do
+        @transform_map.type_breadcrumb(possible_types.map(&:graphql_name)) do
           results = Array.wrap(yield)
           results << GraphQL::Language::Nodes::Field.new(field_alias: TYPENAME_HINT, name: GQL_TYPENAME)
           results
         end
       elsif scope_type == METAOBJECT_SCOPE && MetafieldTypeResolver.mixed_metaobject_type?(parent_type.graphql_name)
-        @transform_map.type_breadcrumb(parent_types & fragment_types, map_all_fields: true) do
+        possible_values = possible_types.map { directive_kwargs(_1.directives, "metaobject")[:type] }
+        @transform_map.type_breadcrumb(possible_values, map_all_fields: true) do
           results = Array.wrap(yield)
           results << GraphQL::Language::Nodes::Field.new(field_alias: TYPENAME_HINT, name: "type")
           results
@@ -183,18 +184,21 @@ module ShopSchemaClient
     def build_metaobject_query(parent_type, node, scope_ns: nil)
       return build_typename(parent_type, node, scope_type: EXTENSIONS_SCOPE, scope_ns: scope_ns) if node.name == GQL_TYPENAME
 
-      field = parent_type.get_field(node.name)
-      metaobject_attrs = field.directives.find { _1.graphql_name == "metaobject" }&.arguments&.keyword_arguments
-      return node unless metaobject_attrs
+      field_type = parent_type.get_field(node.name).type.unwrap
+      return node unless MetafieldTypeResolver.connection_type?(field_type.graphql_name)
 
-      selections = build_connection_selections(field.type.unwrap, node) do |conn_node_type, conn_node_selections|
+      node_type = field_type.get_field("nodes").type.unwrap
+      metaobject_type = directive_kwargs(node_type.directives, "metaobject")&.dig(:type)
+      return node unless metaobject_type
+
+      selections = build_connection_selections(field_type, node) do |conn_node_type, conn_node_selections|
         transform_scope(conn_node_type, conn_node_selections, scope_type: METAOBJECT_SCOPE)
       end
 
       GraphQL::Language::Nodes::Field.new(
         field_alias: "#{RESERVED_PREFIX}#{scope_ns}_#{node.alias || node.name}",
         name: "metaobjects",
-        arguments: [*node.arguments, GraphQL::Language::Nodes::Argument.new(name: "type", value: metaobject_attrs[:type])],
+        arguments: [*node.arguments, GraphQL::Language::Nodes::Argument.new(name: "type", value: metaobject_type)],
         selections: selections,
       )
     end
@@ -203,7 +207,7 @@ module ShopSchemaClient
       return build_typename(parent_type, node, scope_type: scope_type, scope_ns: scope_ns) if node.name == GQL_TYPENAME
 
       field = parent_type.get_field(node.name)
-      metafield_attrs = field.directives.find { _1.graphql_name == "metafield" }&.arguments&.keyword_arguments
+      metafield_attrs = directive_kwargs(field.directives, "metafield")
       return node unless metafield_attrs
 
       type_name = metafield_attrs[:type]
@@ -238,12 +242,10 @@ module ShopSchemaClient
         GraphQL::Language::Nodes::Field.new(name: "jsonValue")
       end
 
-      metafield_key = metafield_attrs[:key]
-      metafield_key = "#{@metafield_ns}.#{metafield_key}" if scope_type == EXTENSIONS_SCOPE
       GraphQL::Language::Nodes::Field.new(
         field_alias: field_alias,
         name: scope_type == EXTENSIONS_SCOPE ? "metafield" : "field",
-        arguments: [GraphQL::Language::Nodes::Argument.new(name: "key", value: metafield_key)],
+        arguments: [GraphQL::Language::Nodes::Argument.new(name: "key", value: metafield_attrs[:key])],
         selections: Array.wrap(selection),
       )
     end
@@ -311,6 +313,10 @@ module ShopSchemaClient
       end
       results << typehint_node if typehint_node
       results
+    end
+
+    def directive_kwargs(directives, directive_name)
+      directives.find { _1.graphql_name == directive_name }&.arguments&.keyword_arguments
     end
   end
 end

@@ -1,0 +1,20 @@
+{
+  "data": {
+    "product": {
+      "extensions": "Product",
+      "___extensions_mixedReference": {
+        "reference": {
+          "id": "gid://shopify/Metaobject/1",
+          "name": {
+            "jsonValue": "Al Pastor"
+          },
+          "calories": {
+            "jsonValue": 75
+          },
+          "__typename": "taco",
+          "___typehint": "taco"
+        }
+      }
+    }
+  }
+}

@@ -1011,13 +1011,13 @@ describe "RequestTransformer" do
                 "__typename" => { "fx" => { "t" => "metaobject_typename" } },
               },
               "if" => {
-                "TacoMetaobject" => {
+                "taco" => {
                   "f" => {
                     "id" => {},
                     "name" => { "fx" => { "t" => "single_line_text_field" } },
                   },
                 },
-                "TacoFillingMetaobject" => {
+                "taco_filling" => {
                   "f" => {
                     "id" => {},
                     "calories" => { "fx" => { "t" => "number_integer" } },
@@ -1137,22 +1137,51 @@ describe "RequestTransformer" do
     }
 
     assert_equal expected_query.squish, result.as_json["query"].squish
-    # assert_equal expected_transforms, result.as_json["transforms"]
+    assert_equal expected_transforms, result.as_json["transforms"]
+  end
+
+  def test_includes_app_context_in_transform_map
+    result = transform_request(
+      %|query {
+        product(id: "1") {
+          extensions { boolean }
+        }
+      }|,
+      schema: app_schema,
+    )
+
+    expected_transforms = {
+      "a" => 123,
+      "f" => {
+        "product" => {
+          "f" => {
+            "extensions" => {
+              "fx" => { "t" => "custom_scope" },
+              "f" => {
+                "boolean" => { "fx" => { "t" => "boolean" } },
+              },
+            },
+          },
+        },
+      },
+    }
+
+    assert_equal expected_transforms, result.as_json["transforms"]
   end
 
   private
 
-  def transform_request(shop_query, variables: {}, operation_name: nil, schema: nil)
+  def transform_request(shop_query, variables: {}, operation_name: nil, schema: shop_schema)
     # validate and transform shop query input
     query = GraphQL::Query.new(
-      schema || shop_schema,
+      schema,
       query: shop_query,
       variables: variables,
       operation_name: operation_name,
     )
 
     errors = query.schema.static_validator.validate(query)[:errors]
-    refute errors.any?, "Invalid shop query: #{errors.first.message}" if errors.any?
+    refute errors.any?, "Invalid metafields query: #{errors.first.message}" if errors.any?
     result = ShopSchemaClient::RequestTransformer.new(query).perform
 
     # validate transformed query against base admin schema

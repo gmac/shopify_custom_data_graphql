@@ -18,8 +18,8 @@ def load_base_admin_schema
   schema
 end
 
-def load_shop_fixtures_catalog
-  catalog = ShopSchemaClient::SchemaCatalog.new
+def load_shop_fixtures_catalog(app_id: nil)
+  catalog = ShopSchemaClient::SchemaCatalog.new(app_id: app_id)
 
   data = JSON.parse(File.read("#{__dir__}/fixtures/metafields.json"))
   data.each { catalog.add_metafield(_1) }
@@ -30,17 +30,28 @@ def load_shop_fixtures_catalog
   catalog
 end
 
-def load_shop_fixtures_schema
-  ShopSchemaClient::SchemaComposer.new(load_base_admin_schema, load_shop_fixtures_catalog).perform
+def load_shop_fixtures_schema(app_id: nil)
+  schema = ShopSchemaClient::SchemaComposer.new(
+    load_base_admin_schema,
+    load_shop_fixtures_catalog(app_id: app_id),
+  ).perform
+
+  # File.write("#{__dir__}/fixtures/admin_2025_01_#{app_id ? "app#{app_id}" : "shop"}.graphql", schema.to_definition)
+  schema
 end
 
 $base_schema = nil
+$app_schema = nil
 $shop_schema = nil
 $shop_api_client = nil
 $metafield_values = nil
 
 def base_schema
   $base_schema ||= load_base_admin_schema
+end
+
+def app_schema
+  $app_schema ||= load_shop_fixtures_schema(app_id: 123)
 end
 
 def shop_schema

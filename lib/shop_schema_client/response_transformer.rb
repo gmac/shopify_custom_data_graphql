@@ -2,6 +2,8 @@
 
 module ShopSchemaClient
   class ResponseTransformer
+    EMPTY_HASH = {}.freeze
+
     def initialize(transform_map)
       @transform_map = transform_map
     end
@@ -41,12 +43,19 @@ module ShopSchemaClient
       end
 
       if (possible_types = current_map["if"])
-        actual_type = object_value[RequestTransformer::TYPENAME_HINT]
-        possible_types.each do |possible_type, next_map|
-          transform_object_scope(object_value, next_map) if possible_type == actual_type
+        resolved_type = object_value.delete(RequestTransformer::TYPENAME_HINT)
+        next_map = possible_types[resolved_type]
+
+        # reduce mixed reference scopes to just the selected type's fields
+        if current_map.dig("fx", "t") == "mixed_reference"
+          base_fields = current_map["f"] || EMPTY_HASH
+          scope_fields = next_map&.dig("f") || EMPTY_HASH
+          object_value.select! { |k, _v| scope_fields.key?(k) || base_fields.key?(k) }
         end
 
-        object_value.delete(RequestTransformer::TYPENAME_HINT)
+        if next_map
+          transform_object_scope(object_value, next_map)
+        end
       end
 
       object_value
@@ -69,7 +78,7 @@ module ShopSchemaClient
       when "static_typename"
         transform["v"]
       when "metaobject_typename"
-        MetafieldTypeResolver.metaobject_typename(field_value)
+        MetafieldTypeResolver.metaobject_typename(field_value, app_id: @transform_map["a"])
       else
         MetafieldTypeResolver.resolve(metafield_type, field_value, transform["s"])
       end

@@ -59,7 +59,7 @@ class App
     end
 
     catalog = duration("Loaded catalog") do
-      ShopSchemaClient::SchemaCatalog.new.load(@client)
+      ShopSchemaClient::SchemaCatalog.load(@client, app: true)
     end
 
     @shop_schema = duration("Composed schema") do

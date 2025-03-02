@@ -3,10 +3,11 @@
 require_relative "schema_catalog/metafield_definition"
 require_relative "schema_catalog/metaobject_definition"
 require_relative "schema_catalog/metaobject_union"
+require_relative "schema_catalog/load"
 
 module ShopSchemaClient
   class SchemaCatalog
-    OWNER_TYPES = {
+    OWNER_ENUMS_BY_TYPE = {
       "CartTransform" => "CARTTRANSFORM",
       "CustomerSegmentMember" => "CUSTOMER",
       "DiscountAutomaticNode" => "DISCOUNT",
@@ -19,19 +20,41 @@ module ShopSchemaClient
       "ProductVariant" => "PRODUCTVARIANT",
     }.freeze
 
-    def initialize
+    attr_accessor :app_id
+    attr_reader :metafields_by_owner
+
+    def initialize(app_id: nil, base_namespaces: ["custom"], scoped_namespaces: ["my_fields"])
+      @app_id = app_id
+      @base_namespaces = base_namespaces.map { format_metafield_namespace(_1, app_id) }
+      @scoped_namespaces = scoped_namespaces.map { format_metafield_namespace(_1, app_id) }
       @metafields_by_owner = {}
       @metaobjects_by_id = {}
     end
 
     def add_metafield(metafield)
-      metafield = MetafieldDefinition.from_graphql(metafield) if metafield.is_a?(Hash)
-      @metafields_by_owner[metafield.owner_type] ||= {}
-      @metafields_by_owner[metafield.owner_type][metafield.key] = metafield
+      metafield = MetafieldDefinition.from_graphql(metafield) unless metafield.is_a?(MetafieldDefinition)
+
+      if matches_metafield_namespace?(@scoped_namespaces, metafield.namespace)
+        if metafield.namespace.start_with?("app--")
+          _, app_id, app_ns = metafield.namespace.split("--")
+          metafield.schema_namespace = []
+          metafield.schema_namespace << "app#{app_id}" if app_id.to_i != @app_id
+          metafield.schema_namespace << app_ns if app_ns
+        else
+          metafield.schema_namespace = [metafield.namespace]
+        end
+      elsif !matches_metafield_namespace?(@base_namespaces, metafield.namespace)
+        return nil
+      end
+
+      @metafields_by_owner[metafield.owner_type] ||= []
+      @metafields_by_owner[metafield.owner_type] << metafield
+      metafield
     end
 
     def add_metaobject(metaobject)
-      metaobject = MetaobjectDefinition.from_graphql(metaobject) if metaobject.is_a?(Hash)
+      metaobject = MetaobjectDefinition.from_graphql(metaobject) unless metaobject.is_a?(MetaobjectDefinition)
+      metaobject.app_context = @app_id
       @metaobjects_by_id[metaobject.id] = metaobject
     end
 
@@ -44,138 +67,28 @@ module ShopSchemaClient
     end
 
     def metafields_for_type(graphql_name)
-      mapped_name = OWNER_TYPES.fetch(graphql_name, graphql_name.underscore.upcase)
-      fields_for_owner = @metafields_by_owner[mapped_name]
-      fields_for_owner ? fields_for_owner.values : []
-    end
-
-    OWNER_TYPE_ENUMS = [
-      "PRODUCT",
-      "PRODUCTVARIANT",
-    ].freeze
-
-    METAFIELD_DEFINITIONS_QUERY = %|
-      query MetafieldDefs($after: String, $query: String, $owner_type: MetafieldOwnerType!) {
-        app { id }
-        results: metafieldDefinitions(first: 250, after: $after, query: $query, ownerType: $owner_type) {
-          nodes {
-            key
-            namespace
-            description
-            type { name }
-            validations {
-              name
-              value
-            }
-            ownerType
-          }
-          pageInfo {
-            endCursor
-            hasNextPage
-          }
-        }
-      }
-    |
-
-    METAOBJECT_DEFINITIONS_QUERY = %|
-      query MetaobjectDefs($after: String) {
-        app { id }
-        results: metaobjectDefinitions(first: 250, after: $after) {
-          nodes {
-            id
-            description
-            name
-            type
-            fieldDefinitions {
-              key
-              description
-              required
-              type { name }
-              validations {
-                name
-                value
-              }
-            }
-          }
-          pageInfo {
-            endCursor
-            hasNextPage
-          }
-        }
-      }
-    |
-
-    def load(client, namespace: "custom", owner_types: OWNER_TYPE_ENUMS)
-      throttle_available = 1
-
-      owner_types.each do |owner_type|
-        throttle_available = paginated_fetch(
-          client,
-          METAFIELD_DEFINITIONS_QUERY,
-          { owner_type: "PRODUCT" },
-          throttle_available: throttle_available,
-          request_cost: 0,
-        ) do |nodes, app_id|
-          ns = namespace == "$app" ? "app--#{app_id}" : namespace
-          nodes.each do |node|
-            add_metafield(node) if node["namespace"] == ns
-          end
-        end
-      end
-
-      paginated_fetch(
-        client,
-        METAOBJECT_DEFINITIONS_QUERY,
-        throttle_available: throttle_available,
-        request_cost: 50,
-      ) do |nodes, app_id|
-        app_ns = "app--#{app_id}"
-        nodes.each do |node|
-          if namespace == "$app"
-            if node["type"].start_with?(app_ns)
-              node["type"].gsub!(app_ns, "")
-            else
-              next
-            end
-          elsif node["type"].start_with?("app--")
-            next
-          end
-
-          add_metaobject(node)
-        end
-      end
-      self
+      mapped_name = OWNER_ENUMS_BY_TYPE.fetch(graphql_name, graphql_name.underscore.upcase)
+      @metafields_by_owner.fetch(mapped_name, [])
     end
 
     private
 
-    def paginated_fetch(client, query, variables = {}, request_cost: 0, throttle_available: 1)
-      next_page = true
-      next_cursor = nil
-      throttle_restore = 100
-
-      while next_page
-        available = throttle_available - request_cost
-        sleep (available.abs.to_f / throttle_restore) + 0.05 if available < 0
-
-        result = client.fetch(query, variables: { after: next_cursor }.merge!(variables))
-        if result["errors"]
-          raise result["errors"].map { _1["message"] }.join(", ")
-        else
-          conn = result.dig("data", "results")
-          yield(conn["nodes"], result.dig("data", "app", "id").split("/").pop.to_i)
-          page_info = conn.dig("pageInfo")
-          next_page = page_info["hasNextPage"]
-          next_cursor = page_info["endCursor"]
-        end
-
-        cost = result.dig("extensions", "cost")
-        request_cost = cost["requestedQueryCost"]
-        throttle_available = cost.dig("throttleStatus", "currentlyAvailable")
-        throttle_restore = cost.dig("throttleStatus", "restoreRate")
+    def matches_metafield_namespace?(candidates, namespace)
+      candidates.each do |c|
+        return true if c == namespace || c == "*"
+        return true if c.end_with?("*") && namespace.start_with?(c[0..-2])
       end
+      false
+    end
 
-      throttle_available
+    def format_metafield_namespace(namespace, app_id = nil)
+      if app_id && namespace.start_with?("$app:")
+        namespace.sub("$app:", "app--#{app_id}--")
+      elsif app_id && namespace == "$app"
+        "app--#{app_id}"
+      else
+        namespace
+      end
     end
   end
 end

@@ -2,11 +2,30 @@
 
 module ShopSchemaClient
   class SchemaCatalog
+    METAOBJECT_GRAPHQL_ATTRS = %|
+      fragment MetaobjectAttrs on MetaobjectDefinition {
+        id
+        description
+        name
+        type
+        fieldDefinitions {
+          key
+          description
+          type { name }
+          validations {
+            name
+            value
+          }
+        }
+      }
+    |
+
     MetaobjectDefinition = Struct.new(
       :id,
       :type,
       :description,
       :fields,
+      :app_context,
       keyword_init: true
     ) do
       class << self
@@ -21,7 +40,7 @@ module ShopSchemaClient
       end
 
       def typename
-        @typename ||= MetafieldTypeResolver.metaobject_typename(type)
+        @typename ||= MetafieldTypeResolver.metaobject_typename(type, app_id: app_context)
       end
 
       def connection_field

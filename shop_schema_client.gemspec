@@ -4,7 +4,7 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require 'shop_schema_client/version'
 
 Gem::Specification.new do |spec|
-  spec.name          = 'shop_schema_client'
+  spec.name          = 'shop_schema_client' # 'shopify_metafields_graphql_api'
   spec.version       = ShopSchemaClient::VERSION
   spec.authors       = ['Greg MacWilliam']
   spec.summary       = 'A client for consuming Shopify metafields and metaobjects through schema projections.'
@@ -26,7 +26,7 @@ Gem::Specification.new do |spec|
   end
   spec.require_paths = ['lib']
 
-  spec.add_runtime_dependency 'graphql', '>= 2.0'
+  spec.add_runtime_dependency 'graphql', '>= 2.4'
   spec.add_runtime_dependency 'activesupport', '>= 7.0.0'
 
   spec.add_development_dependency 'bundler', '~> 2.0'

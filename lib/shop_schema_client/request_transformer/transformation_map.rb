@@ -11,7 +11,7 @@ module ShopSchemaClient
         @value = value
       end
 
-      def merge(other)
+      def merge!(other)
         if other.nil? || other.metafield_type != @metafield_type
           # GraphQL validates overlapping field selections for consistency, so this shouldn't happen.
           # If it does, it probably means one of a few possibilities:
@@ -41,32 +41,33 @@ module ShopSchemaClient
       attr_reader :parent, :fields, :possible_types
       attr_accessor :field_transform
 
-      def initialize(parent = nil, map_all_fields: false)
+      def initialize(parent = nil, map_all_fields: false, app_id: nil)
         @parent = parent
         @possible_types = {}
         @fields = {}
         @field_transform = nil
         @map_all_fields = map_all_fields
+        @app_id = app_id
       end
 
       def map_all_fields?
         @map_all_fields || @parent&.map_all_fields? || false
       end
 
-      def merge(scope)
-        scope.fields.each do |k, s|
+      def merge!(other)
+        other.fields.each do |k, s|
           if (existing_field = @fields[k])
-            existing_field.merge(s)
+            existing_field.merge!(s)
           else
             @fields[k] = s
           end
         end
 
-        if scope.field_transform
+        if other.field_transform
           if @field_transform
-            @field_transform.merge(scope.field_transform)
+            @field_transform.merge!(other.field_transform)
           else
-            @field_transform = scope.field_transform
+            @field_transform = other.field_transform
           end
         end
 
@@ -87,6 +88,7 @@ module ShopSchemaClient
         end
 
         {
+          "a" => @app_id,
           "fx" => @field_transform&.as_json,
           "f" => fields.empty? ? nil : fields,
           "if" => possible_types.empty? ? nil : possible_types,
@@ -97,8 +99,8 @@ module ShopSchemaClient
     class TransformationMap
       attr_reader :current_scope
 
-      def initialize
-        @current_scope = TransformationScope.new
+      def initialize(app_id)
+        @current_scope = TransformationScope.new(app_id: app_id)
       end
 
       def as_json
@@ -107,7 +109,7 @@ module ShopSchemaClient
 
       def apply_field_transform(transform)
         if @current_scope.field_transform
-          @current_scope.field_transform.merge(transform)
+          @current_scope.field_transform.merge!(transform)
         else
           @current_scope.field_transform = transform
         end
@@ -130,7 +132,7 @@ module ShopSchemaClient
           @current_scope.possible_types[typename] ||= TransformationScope.new(
             @current_scope,
             map_all_fields: map_all_fields,
-          ).merge(branch)
+          ).merge!(branch)
         end
         result
       end
