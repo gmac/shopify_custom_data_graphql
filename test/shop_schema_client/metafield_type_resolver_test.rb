@@ -14,8 +14,24 @@ describe "MetafieldTypeResolver" do
     assert_equal false, MetafieldTypeResolver.extensions_type?("Product")
   end
 
-  def test_formats_metaobject_names
+  def test_formats_shop_metaobject_names_without_app_context
     assert_equal "TacoFillingMetaobject", MetafieldTypeResolver.metaobject_typename("taco_filling")
+  end
+
+  def test_formats_shop_metaobject_names_with_app_context
+    assert_equal "TacoFillingShopMetaobject", MetafieldTypeResolver.metaobject_typename("taco_filling", app_id: 123)
+  end
+
+  def test_formats_app_metaobject_names_without_app_context
+    assert_equal "TacoFillingApp123Metaobject", MetafieldTypeResolver.metaobject_typename("app--123--taco_filling")
+  end
+
+  def test_formats_app_metaobject_names_with_same_app_context
+    assert_equal "TacoFillingMetaobject", MetafieldTypeResolver.metaobject_typename("app--123--taco_filling", app_id: 123)
+  end
+
+  def test_formats_app_metaobject_names_with_different_app_context
+    assert_equal "TacoFillingApp123Metaobject", MetafieldTypeResolver.metaobject_typename("app--123--taco_filling", app_id: 456)
   end
 
   def test_identifies_metaobject_names
@@ -199,11 +215,18 @@ describe "MetafieldTypeResolver" do
   end
 
   def test_resolves_mixed_reference
-    skip
+    expected = { "id" => "gid://shopify/Metaobject/1" }
+    assert_equal expected, resolve_fixture("mixed_reference")
   end
 
   def test_resolves_mixed_reference_list
-    skip
+    expected = {
+      "nodes" => [
+        { "id" => "gid://shopify/Metaobject/1" },
+        { "id" => "gid://shopify/Metaobject/2" },
+      ],
+    }
+    assert_equal expected, resolve_fixture("list.mixed_reference")
   end
 
   def test_resolves_money

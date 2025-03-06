@@ -3,6 +3,15 @@
 require "test_helper"
 
 describe "SchemaComposer" do
+  def test_builds_schema_with_app_context
+    assert_equal 123, app_schema
+      .schema_directives
+      .find { _1.graphql_name == "app" }
+      .arguments
+      .keyword_arguments
+      .dig(:id)
+  end
+
   def test_builds_color_metafield_type
     type = shop_schema.get_type("ColorMetatype")
     assert type.kind.scalar?
@@ -43,6 +52,7 @@ describe "SchemaComposer" do
     assert_equal "RatingMetatype", type.get_field("rating").type.to_type_signature
     assert_equal "TacoFillingMetaobject", type.get_field("protein").type.to_type_signature
     assert_equal "TacoFillingMetaobjectConnection", type.get_field("toppings").type.to_type_signature
+    assert_equal "taco", directive_arg(type, "metaobject", :type)
   end
 
   def test_builds_metaobject_connection_types
@@ -50,19 +60,24 @@ describe "SchemaComposer" do
     edge_type = shop_schema.get_type("TacoMetaobjectEdge")
     assert_equal "[TacoMetaobject!]!", type.get_field("nodes").type.to_type_signature
     assert_equal "[TacoMetaobjectEdge!]!", type.get_field("edges").type.to_type_signature
-    assert_equal "TacoMetaobject", edge_type.get_field("node").type.to_type_signature # << is this right?
+    assert_equal "TacoMetaobject", edge_type.get_field("node").type.to_type_signature
+  end
+
+  def test_builds_query_extensions_with_metaobject_queries
+    field = shop_schema.get_type("#{shop_schema.query.graphql_name}Extensions").get_field("tacoMetaobjects")
+    assert_equal "TacoMetaobjectConnection", field.type.to_type_signature
   end
 
   def test_builds_native_type_extensions_scope
-    extensions_field = shop_schema.get_type("Product").get_field("extensions")
-    assert_equal "ProductExtensions!", extensions_field.type.to_type_signature
+    field = shop_schema.get_type("Product").get_field("extensions")
+    assert_equal "ProductExtensions!", field.type.to_type_signature
   end
 
   def test_builds_native_type_extensions_scope_for_all_owner_types
     shop_schema.possible_types(shop_schema.get_type("HasMetafields")).each do |owner_type|
-      extensions_field = owner_type.get_field("extensions")
-      assert extensions_field, "Expected extensions scope for type `#{owner_type.graphql_name}`."
-      assert_equal "#{owner_type.graphql_name}Extensions!", extensions_field.type.to_type_signature
+      field = owner_type.get_field("extensions")
+      assert field, "Expected extensions scope for type `#{owner_type.graphql_name}`."
+      assert_equal "#{owner_type.graphql_name}Extensions!", field.type.to_type_signature
     end
   end
 
@@ -74,9 +89,18 @@ describe "SchemaComposer" do
     assert_equal "String", field.get_argument("after").type.to_type_signature
   end
 
-  def test_builds_metafield_key_field_annotations
+  def test_builds_key_annotations_for_metafields
     directive = shop_schema
       .get_type("ProductExtensions")
+      .get_field("dateTime")
+      .directives
+      .find { _1.graphql_name == "metafield" }
+    assert_equal "custom.date_time", directive.arguments.keyword_arguments[:key]
+  end
+
+  def test_builds_key_annotations_for_metaobject_fields
+    directive = shop_schema
+      .get_type("WidgetMetaobject")
       .get_field("dateTime")
       .directives
       .find { _1.graphql_name == "metafield" }
@@ -253,13 +277,13 @@ describe "SchemaComposer" do
 
   def test_builds_mixed_reference_field
     field = shop_schema.get_type("ProductExtensions").get_field("mixedReference")
-    assert_equal "MixedMetaobject9C79", field.type.to_type_signature
+    assert_equal "MixedMetaobjectF64A", field.type.to_type_signature
     assert_equal "mixed_reference", metafield_directive_type_for(field)
   end
 
   def test_builds_mixed_reference_list_field
     field = shop_schema.get_type("ProductExtensions").get_field("mixedReferenceList")
-    assert_equal "MixedMetaobject9C79Connection", field.type.to_type_signature
+    assert_equal "MixedMetaobjectF64AConnection", field.type.to_type_signature
     assert_equal "list.mixed_reference", metafield_directive_type_for(field)
   end
 
@@ -397,7 +421,11 @@ describe "SchemaComposer" do
 
   private
 
+  def directive_arg(field, directive_name, arg_name)
+    field.directives.find { _1.graphql_name == directive_name }.arguments.keyword_arguments[arg_name]
+  end
+
   def metafield_directive_type_for(field)
-    field.directives.find { _1.graphql_name == "metafield" }.arguments.keyword_arguments[:type]
+    directive_arg(field, "metafield", :type)
   end
 end

@@ -52,8 +52,19 @@ module ShopSchemaClient
         type_name.end_with?(CONNECTION_TYPE_SUFFIX)
       end
 
-      def metaobject_typename(metaobject_type)
-        "#{metaobject_type.camelize}#{METAOBJECT_TYPE_SUFFIX}"
+      def metaobject_typename(metaobject_type, app_id: nil)
+        contextual_type = if app_id && metaobject_type.start_with?("app--#{app_id}--")
+          metaobject_type.sub("app--#{app_id}--", "")
+        elsif metaobject_type.match?(/^app--\d+--/)
+          _, app_id, app_type = metaobject_type.split("--")
+          "#{app_type}_app#{app_id}"
+        elsif app_id
+          "#{metaobject_type}_shop"
+        else
+          metaobject_type
+        end
+
+        "#{contextual_type.gsub("-", "_").camelize}#{METAOBJECT_TYPE_SUFFIX}"
       end
 
       def metaobject_type?(type_name)

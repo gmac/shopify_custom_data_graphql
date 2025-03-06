@@ -219,22 +219,25 @@
     }
   },
   "mixed_reference": {
-    "jsonValue": "gid://shopify/Metaobject/37814294",
+    "jsonValue": "gid://shopify/Metaobject/1",
     "reference": {
-      "id": "gid://shopify/Metaobject/37814294"
+      "id": "gid://shopify/Metaobject/1"
     },
     "references": null
   },
   "list.mixed_reference": {
     "jsonValue": [
-      "gid://shopify/Metaobject/37814294",
-      "gid://shopify/Metaobject/38043670"
+      "gid://shopify/Metaobject/1",
+      "gid://shopify/Metaobject/2"
     ],
     "reference": null,
     "references": {
       "nodes": [
         {
-          "id": "gid://shopify/Metaobject/37814294"
+          "id": "gid://shopify/Metaobject/1"
+        },
+        {
+          "id": "gid://shopify/Metaobject/2"
         }
       ]
     }
