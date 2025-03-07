@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-module ShopSchemaClient
-  class SchemaCatalog
+module ShopifyCustomDataGraphQL
+  class CustomDataCatalog
     OWNER_ENUMS = [
       "API_PERMISSION",
       "ARTICLE",
@@ -32,7 +32,6 @@ module ShopSchemaClient
 
     PROBE_SCHEMA_CONTENT_QUERY = %|
       query ProbeSchemaContent {
-        app { id }
         #{
           OWNER_ENUMS.map do
             %|
@@ -60,7 +59,6 @@ module ShopSchemaClient
 
     METAFIELD_DEFINITIONS_QUERY = %|
       query MetafieldDefs($after: String, $query: String, $owner_type: MetafieldOwnerType!) {
-        app { id }
         results: metafieldDefinitions(first: 250, after: $after, query: $query, ownerType: $owner_type) {
           nodes { ...MetafieldAttrs }
           pageInfo {
@@ -73,7 +71,6 @@ module ShopSchemaClient
 
     METAOBJECT_DEFINITIONS_QUERY = %|
       query MetaobjectDefs($after: String) {
-        app { id }
         results: metaobjectDefinitions(first: 250, after: $after) {
           nodes { ...MetaobjectAttrs }
           pageInfo {
@@ -85,19 +82,18 @@ module ShopSchemaClient
       #{METAOBJECT_GRAPHQL_ATTRS}|
 
     class << self
-      def load(
+      def fetch(
         client,
-        app: false,
+        app_id: nil,
         base_namespaces: ["custom"],
         scoped_namespaces: ["my_fields"],
         owner_types: OWNER_ENUMS
       )
         result = client.fetch(PROBE_SCHEMA_CONTENT_QUERY)
-        app_id = result.dig("data", "app", "id")
         throttle_available = result.dig("extensions", "cost", "throttleStatus", "currentlyAvailable")
 
-        catalog = SchemaCatalog.new(
-          app_id: app ? app_id.split("/").pop.to_i : nil,
+        catalog = new(
+          app_id: app_id,
           base_namespaces: base_namespaces,
           scoped_namespaces: scoped_namespaces,
         )
@@ -153,7 +149,7 @@ module ShopSchemaClient
             raise result["errors"].map { _1["message"] }.join(", ")
           else
             conn = result.dig("data", "results")
-            yield(conn["nodes"], result.dig("data", "app", "id").split("/").pop.to_i)
+            yield(conn["nodes"])
             page_info = conn.dig("pageInfo")
             next_page = page_info["hasNextPage"]
             next_cursor = page_info["endCursor"]

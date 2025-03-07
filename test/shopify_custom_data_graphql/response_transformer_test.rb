@@ -153,7 +153,7 @@ describe "ResponseTransformer" do
     )
 
     assert query.schema.static_validator.validate(query)[:errors].none?, "Invalid shop query."
-    shop_query = ShopSchemaClient::RequestTransformer.new(query).perform
+    shop_query = ShopifyCustomDataGraphQL::RequestTransformer.new(query).perform.to_prepared_query
     shop_query.perform do |query_string|
       fetch_response(fixture, query_string)
     end

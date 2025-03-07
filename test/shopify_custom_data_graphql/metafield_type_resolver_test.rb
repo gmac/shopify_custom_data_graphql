@@ -3,7 +3,7 @@
 require "test_helper"
 
 describe "MetafieldTypeResolver" do
-  MetafieldTypeResolver = ShopSchemaClient::MetafieldTypeResolver
+  MetafieldTypeResolver = ShopifyCustomDataGraphQL::MetafieldTypeResolver
 
   def test_formats_extension_names
     assert_equal "ProductExtensions", MetafieldTypeResolver.extensions_typename("Product")

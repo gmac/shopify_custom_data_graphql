@@ -2,8 +2,8 @@
 
 require "test_helper"
 
-describe "SchemaCatalog" do
-  SchemaCatalog = ShopSchemaClient::SchemaCatalog
+describe "CustomDataCatalog" do
+  CustomDataCatalog = ShopifyCustomDataGraphQL::CustomDataCatalog
 
   BASE_METAFIELD = {
     "key" => "pizza_size",
@@ -17,7 +17,7 @@ describe "SchemaCatalog" do
   }
 
   def test_formats_base_and_scoped_namespaces
-    catalog = SchemaCatalog.new(
+    catalog = CustomDataCatalog.new(
       base_namespaces: ["custom"],
       scoped_namespaces: ["my_fields"],
     )
@@ -32,7 +32,7 @@ describe "SchemaCatalog" do
   end
 
   def test_formats_base_and_scoped_namespaces_for_app_aliases
-    catalog = SchemaCatalog.new(
+    catalog = CustomDataCatalog.new(
       base_namespaces: ["$app", "$app:base"],
       scoped_namespaces: ["$app:my_fields"],
       app_id: 123,
@@ -52,7 +52,7 @@ describe "SchemaCatalog" do
   end
 
   def test_formats_base_and_scoped_namespaces_for_current_app
-    catalog = SchemaCatalog.new(
+    catalog = CustomDataCatalog.new(
       base_namespaces: ["app--123--base"],
       scoped_namespaces: ["app--123", "app--123--my_fields"],
       app_id: 123,
@@ -72,7 +72,7 @@ describe "SchemaCatalog" do
   end
 
   def test_formats_no_app_concessions_without_app_id
-    catalog = SchemaCatalog.new(
+    catalog = CustomDataCatalog.new(
       base_namespaces: ["app--123--base"],
       scoped_namespaces: ["app--123", "app--123--my_fields"],
       app_id: nil,
@@ -92,7 +92,7 @@ describe "SchemaCatalog" do
   end
 
   def test_formats_base_and_scoped_namespaces_for_non_current_app
-    catalog = SchemaCatalog.new(
+    catalog = CustomDataCatalog.new(
       base_namespaces: ["app--456--base"],
       scoped_namespaces: ["app--456", "app--456--my_fields"],
       app_id: 123,
@@ -112,7 +112,7 @@ describe "SchemaCatalog" do
   end
 
   def test_formats_base_namespaces_for_full_wildcards
-    catalog = SchemaCatalog.new(
+    catalog = CustomDataCatalog.new(
       base_namespaces: ["*"],
       app_id: 123,
     )
@@ -139,7 +139,7 @@ describe "SchemaCatalog" do
   end
 
   def test_formats_scoped_namespaces_for_full_wildcards
-    catalog = SchemaCatalog.new(
+    catalog = CustomDataCatalog.new(
       scoped_namespaces: ["*"],
       app_id: 123,
     )
@@ -166,7 +166,7 @@ describe "SchemaCatalog" do
   end
 
   def test_formats_partial_match_wildcard
-    catalog = SchemaCatalog.new(
+    catalog = CustomDataCatalog.new(
       scoped_namespaces: ["my_*", "app--*"],
       app_id: 123,
     )
@@ -199,7 +199,7 @@ describe "SchemaCatalog" do
   end
 
   def test_formats_partial_match_wildcard_with_app_alias
-    catalog = SchemaCatalog.new(
+    catalog = CustomDataCatalog.new(
       scoped_namespaces: ["$app:*"],
       app_id: 123,
     )
@@ -217,7 +217,7 @@ describe "SchemaCatalog" do
   end
 
   def test_rejects_unmatched_namespaces
-    catalog = SchemaCatalog.new(
+    catalog = CustomDataCatalog.new(
       base_namespaces: ["custom", "$app"],
       scoped_namespaces: ["$app:bakery"],
       app_id: 123,
@@ -235,7 +235,7 @@ describe "SchemaCatalog" do
   end
 
   def test_formats_metaobject_types_without_app_context
-    catalog = SchemaCatalog.new
+    catalog = CustomDataCatalog.new
 
     mo = catalog.add_metaobject({ "type" => "taco" }.merge!(BASE_METAOBJECT))
     assert_equal "TacoMetaobject", mo.typename
@@ -248,7 +248,7 @@ describe "SchemaCatalog" do
   end
 
   def test_formats_metaobject_types_with_app_context
-    catalog = SchemaCatalog.new(app_id: 123)
+    catalog = CustomDataCatalog.new(app_id: 123)
 
     mo = catalog.add_metaobject({ "type" => "taco" }.merge!(BASE_METAOBJECT))
     assert_equal "TacoShopMetaobject", mo.typename

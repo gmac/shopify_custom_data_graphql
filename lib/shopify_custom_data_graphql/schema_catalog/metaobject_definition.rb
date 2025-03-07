@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-module ShopSchemaClient
-  class SchemaCatalog
+module ShopifyCustomDataGraphQL
+  class CustomDataCatalog
     METAOBJECT_GRAPHQL_ATTRS = %|
       fragment MetaobjectAttrs on MetaobjectDefinition {
         id

@@ -1,17 +1,42 @@
 # frozen_string_literal: true
 
 require_relative "request_transformer/transformation_map"
-require_relative "request_transformer/result"
 
-module ShopSchemaClient
+module ShopifyCustomDataGraphQL
   class RequestTransformer
-    GQL_TYPENAME = "__typename"
     RESERVED_PREFIX = "___"
-    TYPENAME_HINT = "#{RESERVED_PREFIX}typehint"
-    CUSTOM_SCOPE_TRANSFORM = "custom_scope"
+
+    GQL_TYPENAME = "__typename"
+    HINT_TYPENAME = "#{RESERVED_PREFIX}typehint"
+    NAMESPACE_TRANSFORM = "custom_scope"
+    STATIC_TYPENAME_TRANSFORM = "static_typename"
+    METAOBJECT_TYPENAME_TRANSFORM = "metaobject_typename"
+
     EXTENSIONS_SCOPE = :extensions
     METAOBJECT_SCOPE = :metaobject
     NATIVE_SCOPE = :native
+
+    class Result
+      attr_reader :document, :transform_map
+
+      def initialize(document, transform_map)
+        @document = document
+        @transform_map = transform_map
+        @query = @transforms = nil
+      end
+
+      def query
+        @query ||= GraphQL::Language::Printer.new.print(@document)
+      end
+
+      def transforms
+        @transforms ||= @transform_map.as_json
+      end
+
+      def to_prepared_query
+        PreparedQuery.new({ "query" => query, "transforms" => transforms })
+      end
+    end
 
     def initialize(query, metafield_ns = "custom")
       @query = query
@@ -44,14 +69,14 @@ module ShopSchemaClient
 
           @transform_map.field_breadcrumb(node) do
             if scope_type == NATIVE_SCOPE && node.name == "extensions" && (parent_type == @schema.query || @owner_types.include?(parent_type))
-              @transform_map.apply_field_transform(FieldTransform.new(CUSTOM_SCOPE_TRANSFORM))
-              custom_scope_anchor(node) do
+              @transform_map.apply_field_transform(FieldTransform.new(NAMESPACE_TRANSFORM))
+              with_namespace_anchor_field(node) do
                 next_type = parent_type.get_field(node.name).type.unwrap
                 transform_scope(next_type, node.selections, scope_type: EXTENSIONS_SCOPE, scope_ns: node.alias || node.name)
               end
             elsif scope_type == METAOBJECT_SCOPE && node.name == "system"
-              @transform_map.apply_field_transform(FieldTransform.new(CUSTOM_SCOPE_TRANSFORM))
-              custom_scope_anchor(node) do
+              @transform_map.apply_field_transform(FieldTransform.new(NAMESPACE_TRANSFORM))
+              with_namespace_anchor_field(node) do
                 next_type = parent_type.get_field(node.name).type.unwrap
                 transform_scope(next_type, node.selections, scope_ns: node.alias || node.name)
               end
@@ -73,7 +98,7 @@ module ShopSchemaClient
 
         when GraphQL::Language::Nodes::InlineFragment
           fragment_type = node.type.nil? ? parent_type : @schema.get_type(node.type.name)
-          typed_scope_condition(parent_type, fragment_type, scope_type) do
+          with_typed_condition(parent_type, fragment_type, scope_type) do
             if MetafieldTypeResolver.extensions_type?(fragment_type.graphql_name)
               transform_scope(fragment_type, node.selections, scope_type: EXTENSIONS_SCOPE, scope_ns: scope_ns)
             elsif MetafieldTypeResolver.metaobject_type?(fragment_type.graphql_name)
@@ -92,7 +117,7 @@ module ShopSchemaClient
         when GraphQL::Language::Nodes::FragmentSpread
           fragment_def = @query.fragments[node.name]
           fragment_type = @schema.get_type(fragment_def.type.name)
-          typed_scope_condition(parent_type, fragment_type, scope_type) do
+          with_typed_condition(parent_type, fragment_type, scope_type) do
             unless @new_fragments[node.name]
               fragment_type_name = fragment_type.graphql_name
               fragment_selections = if MetafieldTypeResolver.extensions_type?(fragment_type.graphql_name)
@@ -117,30 +142,30 @@ module ShopSchemaClient
       end
 
       compact_typehints(results)
-      results
     end
 
-    def custom_scope_anchor(node)
+    # custom namespaces prepend an anchor field to hold their position in selection order
+    def with_namespace_anchor_field(node)
       selections = Array.wrap(yield)
-      # custom scopes prepend a placeholder field to anchor their position in the final selection order
       selections.prepend(GraphQL::Language::Nodes::Field.new(field_alias: node.alias || node.name, name: GQL_TYPENAME))
       selections
     end
 
-    def typed_scope_condition(parent_type, fragment_type, scope_type)
+    # abstract positions insert a mapping of possible type outcomes with their respective transformations
+    def with_typed_condition(parent_type, fragment_type, scope_type)
       possible_types = @schema.possible_types(parent_type) & @schema.possible_types(fragment_type)
 
       if scope_type == NATIVE_SCOPE && parent_type.kind.abstract? && fragment_type != parent_type
         @transform_map.type_breadcrumb(possible_types.map(&:graphql_name)) do
           results = Array.wrap(yield)
-          results << GraphQL::Language::Nodes::Field.new(field_alias: TYPENAME_HINT, name: GQL_TYPENAME)
+          results << GraphQL::Language::Nodes::Field.new(field_alias: HINT_TYPENAME, name: GQL_TYPENAME)
           results
         end
-      elsif scope_type == METAOBJECT_SCOPE && MetafieldTypeResolver.mixed_metaobject_type?(parent_type.graphql_name)
+      elsif scope_type == METAOBJECT_SCOPE && MetafieldTypeResolver.mixed_reference_type?(parent_type.graphql_name)
         possible_values = possible_types.map { directive_kwargs(_1.directives, "metaobject")[:type] }
         @transform_map.type_breadcrumb(possible_values, map_all_fields: true) do
           results = Array.wrap(yield)
-          results << GraphQL::Language::Nodes::Field.new(field_alias: TYPENAME_HINT, name: "type")
+          results << GraphQL::Language::Nodes::Field.new(field_alias: HINT_TYPENAME, name: "type")
           results
         end
       else
@@ -148,6 +173,7 @@ module ShopSchemaClient
       end
     end
 
+    # connections must map transformations through possible `edges -> node` and `nodes` pathways
     def build_connection_selections(conn_type, conn_node)
       conn_node_type = conn_type.get_field("nodes").type.unwrap
       conn_node.selections.map do |node|
@@ -161,7 +187,7 @@ module ShopSchemaClient
                   n.merge(selections: yield(conn_node_type, n.selections))
                 when GQL_TYPENAME
                   edge_type = conn_type.get_field("edges").type.unwrap
-                  @transform_map.apply_field_transform(FieldTransform.new("static_typename", value: edge_type.graphql_name))
+                  @transform_map.apply_field_transform(FieldTransform.new(STATIC_TYPENAME_TRANSFORM, value: edge_type.graphql_name))
                   n
                 else
                   n
@@ -172,7 +198,7 @@ module ShopSchemaClient
           when "nodes"
             node.merge(selections: yield(conn_node_type, node.selections))
           when GQL_TYPENAME
-            @transform_map.apply_field_transform(FieldTransform.new("static_typename", value: conn_type.graphql_name))
+            @transform_map.apply_field_transform(FieldTransform.new(STATIC_TYPENAME_TRANSFORM, value: conn_type.graphql_name))
             node
           else
             node
@@ -252,7 +278,7 @@ module ShopSchemaClient
 
     def build_metafield_reference(reference_type, input_selections)
       result = if MetafieldTypeResolver.metaobject_type?(reference_type.graphql_name) ||
-        MetafieldTypeResolver.mixed_metaobject_type?(reference_type.graphql_name)
+        MetafieldTypeResolver.mixed_reference_type?(reference_type.graphql_name)
         GraphQL::Language::Nodes::InlineFragment.new(
           type: GraphQL::Language::Nodes::TypeName.new(name: "Metaobject"),
           selections: transform_scope(reference_type, input_selections, scope_type: METAOBJECT_SCOPE),
@@ -267,28 +293,29 @@ module ShopSchemaClient
       Array.wrap(result)
     end
 
+    # build a __typename that must be transformed to match the schema of custom scopes
     def build_typename(parent_type, node, scope_type:, scope_ns: nil)
       field_name = node.alias || node.name
       case scope_type
       when EXTENSIONS_SCOPE
-        @transform_map.apply_field_transform(FieldTransform.new("static_typename", value: parent_type.graphql_name))
+        @transform_map.apply_field_transform(FieldTransform.new(STATIC_TYPENAME_TRANSFORM, value: parent_type.graphql_name))
         return GraphQL::Language::Nodes::Field.new(
           field_alias: "#{RESERVED_PREFIX}#{scope_ns}_#{field_name}",
-          name: GQL_TYPENAME, # transform parent typename: Product -> ProductExtensions
+          name: GQL_TYPENAME,
         )
       when METAOBJECT_SCOPE
-        @transform_map.apply_field_transform(FieldTransform.new("metaobject_typename"))
+        @transform_map.apply_field_transform(FieldTransform.new(METAOBJECT_TYPENAME_TRANSFORM))
         return GraphQL::Language::Nodes::Field.new(
           field_alias: field_name,
-          name: "type", # transform object type: taco -> TacoMetaobject
+          name: "type", # transform metaobject type: taco -> TacoMetaobject
         )
       else
         node
       end
     end
 
-    # value types (Money, Volume, Dimension) are always concrete,
-    # so can safely traverse fragment selections without type awareness.
+    # build selections for value object types (Money, Volume, Dimension)
+    # these are always concrete, so can safely traverse fragment selections without type awareness
     def extract_value_object_selection(selections, acc = [])
       selections.each do |node|
         case node
@@ -303,18 +330,19 @@ module ShopSchemaClient
       acc
     end
 
-    def compact_typehints(results)
+    # eliminate redundant ___typehint selections (purely cosmetic)
+    def compact_typehints(nodes)
       typehint_node = nil
-      results.reject! do |node|
-        next false unless node.is_a?(GraphQL::Language::Nodes::Field) && node.alias == TYPENAME_HINT
-
-        typehint_node = node
-        true
+      nodes.reject! do |node|
+        is_typehint = node.is_a?(GraphQL::Language::Nodes::Field) && node.alias == HINT_TYPENAME
+        typehint_node = node if is_typehint
+        is_typehint
       end
-      results << typehint_node if typehint_node
-      results
+      nodes << typehint_node if typehint_node
+      nodes
     end
 
+    # pull kwargs from a given directive name (GraphQL Ruby lacks native apis for this)
     def directive_kwargs(directives, directive_name)
       directives.find { _1.graphql_name == directive_name }&.arguments&.keyword_arguments
     end

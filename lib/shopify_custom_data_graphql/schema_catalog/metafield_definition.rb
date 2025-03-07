@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-module ShopSchemaClient
-  class SchemaCatalog
+module ShopifyCustomDataGraphQL
+  class CustomDataCatalog
     METAFIELD_GRAPHQL_ATTRS = %|
       fragment MetafieldAttrs on MetafieldDefinition {
         key
@@ -48,11 +48,11 @@ module ShopSchemaClient
       end
 
       def list?
-        ShopSchemaClient::MetafieldTypeResolver.list?(type)
+        ShopifyCustomDataGraphQL::MetafieldTypeResolver.list?(type)
       end
 
       def reference?
-        ShopSchemaClient::MetafieldTypeResolver.reference?(type)
+        ShopifyCustomDataGraphQL::MetafieldTypeResolver.reference?(type)
       end
 
       def linked_metaobject(catalog)

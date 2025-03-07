@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-module ShopSchemaClient
+module ShopifyCustomDataGraphQL
   class MetafieldTypeResolver
     CONNECTION_TYPE_SUFFIX = "Connection"
     EXTENSIONS_TYPE_SUFFIX = "Extensions"
     METAOBJECT_TYPE_SUFFIX = "Metaobject"
-    MIXED_METAOBJECT_TYPE_PREFIX = "MixedMetaobject"
+    MIXED_REFERENCE_TYPE_PREFIX = "MixedReferenced"
 
     COLOR_TYPENAME = "ColorMetatype"
     DIMENSION_TYPENAME = "DimensionMetatype"
@@ -71,8 +71,8 @@ module ShopSchemaClient
         type_name != METAOBJECT_TYPE_SUFFIX && type_name.end_with?(METAOBJECT_TYPE_SUFFIX)
       end
 
-      def mixed_metaobject_type?(type_name)
-        type_name.start_with?(MIXED_METAOBJECT_TYPE_PREFIX)
+      def mixed_reference_type?(type_name)
+        type_name.start_with?(MIXED_REFERENCE_TYPE_PREFIX)
       end
 
       def extensions_typename(native_typename)

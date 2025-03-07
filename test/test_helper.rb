@@ -1,15 +1,15 @@
 # frozen_string_literal: true
 
-$LOAD_PATH.unshift File.expand_path('../../lib', __FILE__)
+$LOAD_PATH.unshift File.expand_path("../../lib", __FILE__)
 
-require 'bundler/setup'
+require "bundler/setup"
 Bundler.require(:default, :test)
 
-require 'minitest/pride'
-require 'minitest/autorun'
-require 'net/http'
-require 'uri'
-require 'json'
+require "minitest/pride"
+require "minitest/autorun"
+require "net/http"
+require "uri"
+require "json"
 
 def load_base_admin_schema
   sdl = File.read("#{__dir__}/fixtures/admin_2025_01_public.graphql")
@@ -19,7 +19,7 @@ def load_base_admin_schema
 end
 
 def load_shop_fixtures_catalog(app_id: nil)
-  catalog = ShopSchemaClient::SchemaCatalog.new(app_id: app_id)
+  catalog = ShopifyCustomDataGraphQL::CustomDataCatalog.new(app_id: app_id)
 
   data = JSON.parse(File.read("#{__dir__}/fixtures/metafields.json"))
   data.each { catalog.add_metafield(_1) }
@@ -31,7 +31,7 @@ def load_shop_fixtures_catalog(app_id: nil)
 end
 
 def load_shop_fixtures_schema(app_id: nil)
-  schema = ShopSchemaClient::SchemaComposer.new(
+  schema = ShopifyCustomDataGraphQL::SchemaComposer.new(
     load_base_admin_schema,
     load_shop_fixtures_catalog(app_id: app_id),
   ).perform
@@ -65,7 +65,7 @@ end
 def shop_api_client
   $shop_api_client ||= begin
     secrets = JSON.parse(File.read("#{__dir__}/../secrets.json"))
-    ShopSchemaClient::AdminApiClient.new(
+    ShopifyCustomDataGraphQL::AdminApiClient.new(
       shop_url: secrets["shop_url"],
       access_token: secrets["access_token"],
     )

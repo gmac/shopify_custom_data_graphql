@@ -3,10 +3,10 @@
 require_relative "schema_catalog/metafield_definition"
 require_relative "schema_catalog/metaobject_definition"
 require_relative "schema_catalog/metaobject_union"
-require_relative "schema_catalog/load"
+require_relative "schema_catalog/fetch"
 
-module ShopSchemaClient
-  class SchemaCatalog
+module ShopifyCustomDataGraphQL
+  class CustomDataCatalog
     OWNER_ENUMS_BY_TYPE = {
       "CartTransform" => "CARTTRANSFORM",
       "CustomerSegmentMember" => "CUSTOMER",
@@ -20,8 +20,7 @@ module ShopSchemaClient
       "ProductVariant" => "PRODUCTVARIANT",
     }.freeze
 
-    attr_accessor :app_id
-    attr_reader :metafields_by_owner
+    attr_reader :app_id, :metafields_by_owner
 
     def initialize(app_id: nil, base_namespaces: ["custom"], scoped_namespaces: ["my_fields"])
       @app_id = app_id
@@ -86,6 +85,8 @@ module ShopSchemaClient
         namespace.sub("$app:", "app--#{app_id}--")
       elsif app_id && namespace == "$app"
         "app--#{app_id}"
+      elsif namespace.start_with?("$app")
+        raise ArgumentError, "Namespaces with `$app` must provide an app context id"
       else
         namespace
       end

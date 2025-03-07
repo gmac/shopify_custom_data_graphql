@@ -35,8 +35,8 @@ describe "RequestTransformer" do
       },
     }
 
-    assert_equal expected_query.squish, result.as_json["query"].squish
-    assert_equal expected_transforms, result.as_json["transforms"].dig("f", "product")
+    assert_equal expected_query.squish, result.query.squish
+    assert_equal expected_transforms, result.transforms.dig("f", "product")
   end
 
   def test_transforms_extensions_value_object_fields
@@ -71,8 +71,8 @@ describe "RequestTransformer" do
       },
     }
 
-    assert_equal expected_query.squish, result.as_json["query"].squish
-    assert_equal expected_transforms, result.as_json["transforms"].dig("f", "product")
+    assert_equal expected_query.squish, result.query.squish
+    assert_equal expected_transforms, result.transforms.dig("f", "product")
   end
 
   def test_transforms_extensions_reference_fields
@@ -111,8 +111,8 @@ describe "RequestTransformer" do
       },
     }
 
-    assert_equal expected_query.squish, result.as_json["query"].squish
-    assert_equal expected_transforms, result.as_json["transforms"].dig("f", "product")
+    assert_equal expected_query.squish, result.query.squish
+    assert_equal expected_transforms, result.transforms.dig("f", "product")
   end
 
   def test_transforms_extensions_reference_list_fields
@@ -159,8 +159,8 @@ describe "RequestTransformer" do
       },
     }
 
-    assert_equal expected_query.squish, result.as_json["query"].squish
-    assert_equal expected_transforms, result.as_json["transforms"].dig("f", "product")
+    assert_equal expected_query.squish, result.query.squish
+    assert_equal expected_transforms, result.transforms.dig("f", "product")
   end
 
   def test_transforms_extensions_typename
@@ -190,8 +190,8 @@ describe "RequestTransformer" do
       },
     }
 
-    assert_equal expected_query.squish, result.as_json["query"].squish
-    assert_equal expected_transforms, result.as_json["transforms"].dig("f", "product")
+    assert_equal expected_query.squish, result.query.squish
+    assert_equal expected_transforms, result.transforms.dig("f", "product")
   end
 
   def test_transforms_nested_extension_fields
@@ -249,8 +249,8 @@ describe "RequestTransformer" do
       },
     }
 
-    assert_equal expected_query.squish, result.as_json["query"].squish
-    assert_equal expected_transforms, result.as_json["transforms"].dig("f", "product")
+    assert_equal expected_query.squish, result.query.squish
+    assert_equal expected_transforms, result.transforms.dig("f", "product")
   end
 
   def test_transforms_extension_fields_with_aliases
@@ -296,12 +296,12 @@ describe "RequestTransformer" do
       },
     }
 
-    assert_equal expected_query.squish, result.as_json["query"].squish
-    assert_equal expected_transforms, result.as_json["transforms"].dig("f", "product")
+    assert_equal expected_query.squish, result.query.squish
+    assert_equal expected_transforms, result.transforms.dig("f", "product")
   end
 
   def test_restricts_reserved_alias_prefix
-    error = assert_raises(ShopSchemaClient::ValidationError) do
+    error = assert_raises(ShopifyCustomDataGraphQL::ValidationError) do
       transform_request(%|query {
         product(id: "1") { ___sfoo: title }
       }|)
@@ -353,8 +353,8 @@ describe "RequestTransformer" do
       },
     }
 
-    assert_equal expected_query.squish, result.as_json["query"].squish
-    assert_equal expected_transforms, result.as_json["transforms"].dig("f", "product")
+    assert_equal expected_query.squish, result.query.squish
+    assert_equal expected_transforms, result.transforms.dig("f", "product")
   end
 
   def test_transforms_metaobject_value_object_fields
@@ -400,8 +400,8 @@ describe "RequestTransformer" do
       },
     }
 
-    assert_equal expected_query.squish, result.as_json["query"].squish
-    assert_equal expected_transforms, result.as_json["transforms"].dig("f", "product")
+    assert_equal expected_query.squish, result.query.squish
+    assert_equal expected_transforms, result.transforms.dig("f", "product")
   end
 
   def test_transforms_metaobject_reference_fields
@@ -451,8 +451,8 @@ describe "RequestTransformer" do
       },
     }
 
-    assert_equal expected_query.squish, result.as_json["query"].squish
-    assert_equal expected_transforms, result.as_json["transforms"].dig("f", "product")
+    assert_equal expected_query.squish, result.query.squish
+    assert_equal expected_transforms, result.transforms.dig("f", "product")
   end
 
   def test_transforms_metaobject_reference_list_fields
@@ -510,8 +510,8 @@ describe "RequestTransformer" do
       },
     }
 
-    assert_equal expected_query.squish, result.as_json["query"].squish
-    assert_equal expected_transforms, result.as_json["transforms"].dig("f", "product")
+    assert_equal expected_query.squish, result.query.squish
+    assert_equal expected_transforms, result.transforms.dig("f", "product")
   end
 
   def test_transforms_metaobject_typename
@@ -548,8 +548,8 @@ describe "RequestTransformer" do
       },
     }
 
-    assert_equal expected_query.squish, result.as_json["query"].squish
-    assert_equal expected_transforms, result.as_json["transforms"].dig("f", "product")
+    assert_equal expected_query.squish, result.query.squish
+    assert_equal expected_transforms, result.transforms.dig("f", "product")
   end
 
   def test_transforms_nested_metaobject_fields
@@ -608,8 +608,8 @@ describe "RequestTransformer" do
       },
     }
 
-    assert_equal expected_query.squish, result.as_json["query"].squish
-    assert_equal expected_transforms, result.as_json["transforms"].dig("f", "product")
+    assert_equal expected_query.squish, result.query.squish
+    assert_equal expected_transforms, result.transforms.dig("f", "product")
   end
 
   def test_transforms_metaobject_fields_with_aliases
@@ -658,8 +658,8 @@ describe "RequestTransformer" do
       },
     }
 
-    assert_equal expected_query.squish, result.as_json["query"].squish
-    assert_equal expected_transforms, result.as_json["transforms"].dig("f", "product")
+    assert_equal expected_query.squish, result.query.squish
+    assert_equal expected_transforms, result.transforms.dig("f", "product")
   end
 
   def test_only_transforms_custom_metaobject_fields
@@ -706,8 +706,8 @@ describe "RequestTransformer" do
       },
     }
 
-    assert_equal expected_query.squish, result.as_json["query"].squish
-    assert_equal expected_transforms, result.as_json["transforms"].dig("f", "product")
+    assert_equal expected_query.squish, result.query.squish
+    assert_equal expected_transforms, result.transforms.dig("f", "product")
   end
 
   def test_coalesces_value_object_selections
@@ -744,8 +744,8 @@ describe "RequestTransformer" do
       },
     }
 
-    assert_equal expected_query.squish, result.as_json["query"].squish
-    assert_equal expected_transforms, result.as_json["transforms"].dig("f", "product")
+    assert_equal expected_query.squish, result.query.squish
+    assert_equal expected_transforms, result.transforms.dig("f", "product")
   end
 
   def test_extracts_value_object_selection_fragents
@@ -792,8 +792,8 @@ describe "RequestTransformer" do
       },
     }
 
-    assert_equal expected_query.squish, result.as_json["query"].squish
-    assert_equal expected_transforms, result.as_json["transforms"].dig("f", "product")
+    assert_equal expected_query.squish, result.query.squish
+    assert_equal expected_transforms, result.transforms.dig("f", "product")
   end
 
   def test_transforms_fragments_on_custom_scope
@@ -831,8 +831,8 @@ describe "RequestTransformer" do
       },
     }
 
-    assert_equal expected_query.squish, result.as_json["query"].squish
-    assert_equal expected_transforms, result.as_json["transforms"].dig("f", "product")
+    assert_equal expected_query.squish, result.query.squish
+    assert_equal expected_transforms, result.transforms.dig("f", "product")
   end
 
   def test_transforms_inline_fragments_with_type_condition
@@ -894,8 +894,8 @@ describe "RequestTransformer" do
       },
     }
 
-    assert_equal expected_query.squish, result.as_json["query"].squish
-    assert_equal expected_transforms, result.as_json["transforms"].dig("f")
+    assert_equal expected_query.squish, result.query.squish
+    assert_equal expected_transforms, result.transforms.dig("f")
   end
 
   def test_transforms_fragment_spreads_with_type_condition
@@ -961,8 +961,8 @@ describe "RequestTransformer" do
       },
     }
 
-    assert_equal expected_query.squish, result.as_json["query"].squish
-    assert_equal expected_transforms, result.as_json["transforms"].dig("f")
+    assert_equal expected_query.squish, result.query.squish
+    assert_equal expected_transforms, result.transforms.dig("f")
   end
 
   def test_transforms_mixed_metaobject_reference
@@ -1030,8 +1030,8 @@ describe "RequestTransformer" do
       },
     }
 
-    assert_equal expected_query.squish, result.as_json["query"].squish
-    assert_equal expected_transforms, result.as_json["transforms"].dig("f", "product")
+    assert_equal expected_query.squish, result.query.squish
+    assert_equal expected_transforms, result.transforms.dig("f", "product")
   end
 
   def test_transforms_root_query_extensions
@@ -1081,8 +1081,8 @@ describe "RequestTransformer" do
       },
     }
 
-    assert_equal expected_query.squish, result.as_json["query"].squish
-    assert_equal expected_transforms, result.as_json["transforms"]
+    assert_equal expected_query.squish, result.query.squish
+    assert_equal expected_transforms, result.transforms
   end
 
   def test_transforms_metaobject_system_extensions
@@ -1136,8 +1136,8 @@ describe "RequestTransformer" do
       },
     }
 
-    assert_equal expected_query.squish, result.as_json["query"].squish
-    assert_equal expected_transforms, result.as_json["transforms"]
+    assert_equal expected_query.squish, result.query.squish
+    assert_equal expected_transforms, result.transforms
   end
 
   def test_includes_app_context_in_transform_map
@@ -1166,7 +1166,7 @@ describe "RequestTransformer" do
       },
     }
 
-    assert_equal expected_transforms, result.as_json["transforms"]
+    assert_equal expected_transforms, result.transforms
   end
 
   private
@@ -1182,7 +1182,7 @@ describe "RequestTransformer" do
 
     errors = query.schema.static_validator.validate(query)[:errors]
     refute errors.any?, "Invalid metafields query: #{errors.first.message}" if errors.any?
-    result = ShopSchemaClient::RequestTransformer.new(query).perform
+    result = ShopifyCustomDataGraphQL::RequestTransformer.new(query).perform
 
     # validate transformed query against base admin schema
     admin_query = GraphQL::Query.new(

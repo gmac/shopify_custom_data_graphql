@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-module ShopSchemaClient
-  class SchemaCatalog
+module ShopifyCustomDataGraphQL
+  class CustomDataCatalog
     class MetaobjectUnion
       attr_reader :metaobject_definitions
 
@@ -17,7 +17,7 @@ module ShopSchemaClient
         @typename ||= begin
           member_names = @metaobject_definitions.map(&:typename)
           member_identity = Digest::MD5.hexdigest(member_names.join("/")).slice(0..3)
-          "#{MetafieldTypeResolver::MIXED_METAOBJECT_TYPE_PREFIX}#{member_identity.upcase}"
+          "#{MetafieldTypeResolver::MIXED_REFERENCE_TYPE_PREFIX}#{member_identity.upcase}"
         end
       end
     end
