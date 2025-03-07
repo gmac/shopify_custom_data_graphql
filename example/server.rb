@@ -53,16 +53,23 @@ class App
 
   def reload_shop_schema
     start = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-    base_schema = duration("Built base schema") do
-      base_sdl = File.read("#{__dir__}/../test/fixtures/admin_2025_01_public.graphql")
-      GraphQL::Schema.from_definition(base_sdl)
+
+    catalog = duration("Loading custom data catalog") do
+      ShopSchemaClient::SchemaCatalog.fetch(@client, app: true)
     end
 
-    catalog = duration("Loaded catalog") do
-      ShopSchemaClient::SchemaCatalog.load(@client, app: true)
+    base_schema = duration("Loading base admin schema") do
+      file_path = "#{__dir__}/shopify_admin_#{@client.api_version.underscore}_app#{@client.api_client_id}.graphql"
+      begin
+        GraphQL::Schema.from_definition(File.read(file_path))
+      rescue Errno::ENOENT
+        puts "-> no cached admin schema, fetching introspection..."
+        File.write(file_path, @client.schema.to_definition)
+        @client.schema
+      end
     end
 
-    @shop_schema = duration("Composed schema") do
+    @shop_schema = duration("Composing reference schema") do
       ShopSchemaClient::SchemaComposer.new(base_schema, catalog).perform
     end
   end
@@ -85,10 +92,11 @@ class App
   end
 
   def duration(action)
+    puts "#{action}..."
     start = Process.clock_gettime(Process::CLOCK_MONOTONIC)
     result = yield
     duration = Process.clock_gettime(Process::CLOCK_MONOTONIC) - start
-    puts "#{action} in #{duration}s"
+    puts "-> done in #{duration}s"
     result
   end
 end

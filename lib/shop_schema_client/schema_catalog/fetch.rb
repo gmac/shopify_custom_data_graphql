@@ -85,7 +85,7 @@ module ShopSchemaClient
       #{METAOBJECT_GRAPHQL_ATTRS}|
 
     class << self
-      def load(
+      def fetch(
         client,
         app: false,
         base_namespaces: ["custom"],

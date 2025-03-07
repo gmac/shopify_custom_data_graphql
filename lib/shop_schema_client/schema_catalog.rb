@@ -3,7 +3,7 @@
 require_relative "schema_catalog/metafield_definition"
 require_relative "schema_catalog/metaobject_definition"
 require_relative "schema_catalog/metaobject_union"
-require_relative "schema_catalog/load"
+require_relative "schema_catalog/fetch"
 
 module ShopSchemaClient
   class SchemaCatalog
@@ -20,8 +20,7 @@ module ShopSchemaClient
       "ProductVariant" => "PRODUCTVARIANT",
     }.freeze
 
-    attr_accessor :app_id
-    attr_reader :metafields_by_owner
+    attr_reader :app_id, :metafields_by_owner
 
     def initialize(app_id: nil, base_namespaces: ["custom"], scoped_namespaces: ["my_fields"])
       @app_id = app_id

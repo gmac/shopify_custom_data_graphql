@@ -15,12 +15,6 @@ module ShopSchemaClient
       argument :type, String, required: true
     end
 
-    class AppDirective < GraphQL::Schema::Directive
-      graphql_name "app"
-      locations SCHEMA
-      argument :id, Int, required: true
-    end
-
     attr_reader :catalog, :schema_types
 
     def initialize(base_schema, catalog)
@@ -56,14 +50,10 @@ module ShopSchemaClient
       end
 
       builder = self
-      Class.new(GraphQL::Schema) do
+      schema = Class.new(GraphQL::Schema) do
         use(GraphQL::Schema::Visibility)
         directive(MetafieldDirective)
         directive(MetaobjectDirective)
-        if (app_id = builder.catalog.app_id)
-          directive(AppDirective)
-          schema_directive(AppDirective, id: app_id)
-        end
 
         add_type_and_traverse(builder.schema_types.values, root: false)
         orphan_types(builder.schema_types.values.select { |t| t.respond_to?(:kind) && t.kind.object? })
@@ -71,6 +61,19 @@ module ShopSchemaClient
         mutation(builder.schema_types[mutation_name])
         own_orphan_types.clear
       end
+
+      if @catalog.app_id
+        app_directive = Class.new(GraphQL::Schema::Directive) do
+          graphql_name "app"
+          locations GraphQL::Schema::Directive::SCHEMA
+          argument :id, builder.schema_types["ID"], required: true
+        end
+
+        schema.directive(app_directive)
+        schema.schema_directive(app_directive, id: @catalog.app_id)
+      end
+
+      schema
     end
 
     def type_for_metafield_definition(field_def)
