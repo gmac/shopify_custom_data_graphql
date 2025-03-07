@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require_relative "request_transformer/transformation_map"
-require_relative "request_transformer/result"
 
 module ShopSchemaClient
   class RequestTransformer
@@ -16,6 +15,22 @@ module ShopSchemaClient
     EXTENSIONS_SCOPE = :extensions
     METAOBJECT_SCOPE = :metaobject
     NATIVE_SCOPE = :native
+
+    class Result
+      attr_reader :document, :transform_map
+
+      def initialize(document, transform_map)
+        @document = document
+        @transform_map = transform_map
+      end
+
+      def to_prepared_query
+        PreparedQuery.new({
+          "query" => GraphQL::Language::Printer.new.print(@document),
+          "transforms" => @transform_map.as_json,
+        })
+      end
+    end
 
     def initialize(query, metafield_ns = "custom")
       @query = query

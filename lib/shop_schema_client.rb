@@ -10,7 +10,7 @@ end
 
 require_relative "shop_schema_client/admin_api_client"
 require_relative "shop_schema_client/metafield_type_resolver"
-require_relative "shop_schema_client/shop_query"
+require_relative "shop_schema_client/prepared_query"
 require_relative "shop_schema_client/schema_catalog"
 require_relative "shop_schema_client/schema_composer"
 require_relative "shop_schema_client/request_transformer"

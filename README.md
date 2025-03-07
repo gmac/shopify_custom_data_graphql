@@ -253,11 +253,11 @@ This will save the transformed query and its response transform mapping as a JSO
 {"query":"query {\n  product(id: \"gid://shopify/Product/6885875646486\") {\n    id\n    title\n    __ex_flexRating: metafield(key: \"custom.flex_rating\") {\n      value\n    }\n  }\n}","transforms":{"f":{"product":{"f":{"extensions":{"f":{"flexRating":{"fx":{"do":"mf_val","t":"number_decimal"}}}}},"ex":"extensions"}}}}
 ```
 
-In production, load the saved query into a new `ShopQuery`:
+In production, load the saved query into a new `PreparedQuery`:
 
 ```ruby
 json = File.read("my_saved_query.json")
-shop_query = ShopQuery.new(json)
+shop_query = PreparedQuery.new(json)
 
 response = shop_query.perform do |query_string|
   variables = { id: "gid://shopify/Product/1" }
