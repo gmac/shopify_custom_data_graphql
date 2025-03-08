@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ShopSchemaClient
+module ShopifyCustomDataGraphQL
   class RequestTransformer
     class FieldTransform
       attr_reader :metafield_type, :selections

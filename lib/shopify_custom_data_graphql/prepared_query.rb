@@ -1,13 +1,16 @@
 # frozen_string_literal: true
 
-module ShopSchemaClient
-  class ShopQuery
-    attr_reader :query, :transforms, :response_transformer
+module ShopifyCustomDataGraphQL
+  class PreparedQuery
+    attr_reader :query, :transforms
 
     def initialize(params)
       @query = params["query"]
       @transforms = params["transforms"]
-      @response_transformer = ResponseTransformer.new(@transforms)
+
+      unless @query && @transforms
+        raise ArgumentError, "PreparedQuery requires params `query` and `transforms`"
+      end
     end
 
     def as_json
@@ -22,7 +25,7 @@ module ShopSchemaClient
     end
 
     def perform
-      @response_transformer.perform(yield(@query))
+      ResponseTransformer.new(@transforms).perform(yield(@query))
     end
   end
 end

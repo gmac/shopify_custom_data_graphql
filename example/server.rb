@@ -4,7 +4,7 @@ require 'puma'
 require 'rackup'
 require 'json'
 require 'graphql'
-require_relative '../lib/shop_schema_client'
+require_relative '../lib/shopify_custom_data_graphql'
 
 class App
   def initialize
@@ -16,12 +16,21 @@ class App
       File.read("#{__dir__}/../secrets.json")
     )
 
-    @client = ShopSchemaClient::AdminApiClient.new(
+    @mock_cache = {}
+    @client = ShopifyCustomDataGraphQL::Client.new(
       shop_url: secrets["shop_url"],
       access_token: secrets["access_token"],
+      api_version: "2025-01",
+      file_store_path: "#{__dir__}/tmp",
+      app_context_id: 20228407297,
     )
 
-    reload_shop_schema
+    @client.on_cache_read { |k| @mock_cache[k] }
+    @client.on_cache_write { |k, v| @mock_cache[k] = v }
+
+    puts "Loading custom data schema..."
+    @client.eager_load!
+    puts "Done."
   end
 
   def call(env)
@@ -29,18 +38,11 @@ class App
     case req.path_info
     when /graphql/
       params = JSON.parse(req.body.read)
-      query = GraphQL::Query.new(
-        @shop_schema,
+      result = @client.execute(
         query: params["query"],
         variables: params["variables"],
         operation_name: params["operationName"],
       )
-
-      result = if query.selected_operation.name == "IntrospectionQuery"
-        query.result.to_h
-      else
-        serve_shop_request(query)
-      end
 
       [200, {"content-type" => "application/json"}, [JSON.generate(result)]]
     when /refresh/
@@ -49,47 +51,6 @@ class App
     else
       [200, {"content-type" => "text/html"}, [@graphiql]]
     end
-  end
-
-  def reload_shop_schema
-    start = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-    base_schema = duration("Built base schema") do
-      base_sdl = File.read("#{__dir__}/../test/fixtures/admin_2025_01_public.graphql")
-      GraphQL::Schema.from_definition(base_sdl)
-    end
-
-    catalog = duration("Loaded catalog") do
-      ShopSchemaClient::SchemaCatalog.load(@client, app: true)
-    end
-
-    @shop_schema = duration("Composed schema") do
-      ShopSchemaClient::SchemaComposer.new(base_schema, catalog).perform
-    end
-  end
-
-  def serve_shop_request(query)
-    # statically validate using the shop schema, return any errors...
-    errors = @shop_schema.static_validator.validate(query)[:errors]
-    if errors.any?
-      { errors: errors.map(&:to_h) }
-    else
-      # valid request shape; transform it and send it...
-      shop_query = ShopSchemaClient::RequestTransformer.new(query).perform
-      shop_query.perform do |query_string|
-        puts query_string
-        @client.fetch(query_string, variables: query.variables.to_h)
-      end
-    end
-  rescue ShopSchemaClient::ValidationError => e
-    { errors: [{ message: e.message }] }
-  end
-
-  def duration(action)
-    start = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-    result = yield
-    duration = Process.clock_gettime(Process::CLOCK_MONOTONIC) - start
-    puts "#{action} in #{duration}s"
-    result
   end
 end
 

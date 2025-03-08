@@ -4,12 +4,15 @@ require "net/http"
 require "uri"
 require "json"
 
-module ShopSchemaClient
+module ShopifyCustomDataGraphQL
   class AdminApiClient
+    attr_reader :api_version
+
     def initialize(shop_url:, access_token:, api_version: "2025-01")
       @shop_url = shop_url
       @access_token = access_token
       @api_version = api_version
+      @api_client_id = nil
     end
 
     def fetch(query, variables: nil, operation_name: nil)
@@ -27,7 +30,19 @@ module ShopSchemaClient
         },
       )
 
+      @api_client_id ||= response["x-stats-apiclientid"].to_i
       JSON.parse(response.body)
+    end
+
+    def api_client_id
+      return @api_client_id unless @api_client_id.nil?
+
+      fetch("{ __typename }")
+      @api_client_id
+    end
+
+    def schema
+      @schema ||= GraphQL::Schema.from_introspection(fetch(GraphQL::Introspection.query))
     end
   end
 end
