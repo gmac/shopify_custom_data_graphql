@@ -15,6 +15,15 @@ module ShopifyCustomDataGraphQL
       @errors = errors || [{ "message" => message }]
     end
   end
+
+  class Tracer < Hash
+    def span(span_name)
+      start = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      result = yield
+      self[span_name] = (Process.clock_gettime(Process::CLOCK_MONOTONIC) - start) * 1_000
+      result
+    end
+  end
 end
 
 require_relative "shopify_custom_data_graphql/metafield_type_resolver"

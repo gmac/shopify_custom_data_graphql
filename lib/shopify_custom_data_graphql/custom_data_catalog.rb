@@ -22,10 +22,10 @@ module ShopifyCustomDataGraphQL
 
     attr_reader :app_id, :metafields_by_owner
 
-    def initialize(app_id: nil, base_namespaces: ["custom"], scoped_namespaces: ["my_fields"])
+    def initialize(app_id: nil, base_namespaces: ["custom"], prefixed_namespaces: ["my_fields"])
       @app_id = app_id
       @base_namespaces = base_namespaces.map { format_metafield_namespace(_1, app_id) }
-      @scoped_namespaces = scoped_namespaces.map { format_metafield_namespace(_1, app_id) }
+      @prefixed_namespaces = prefixed_namespaces.map { format_metafield_namespace(_1, app_id) }
       @metafields_by_owner = {}
       @metaobjects_by_id = {}
     end
@@ -33,7 +33,7 @@ module ShopifyCustomDataGraphQL
     def add_metafield(metafield)
       metafield = MetafieldDefinition.from_graphql(metafield) unless metafield.is_a?(MetafieldDefinition)
 
-      if matches_metafield_namespace?(@scoped_namespaces, metafield.namespace)
+      if matches_metafield_namespace?(@prefixed_namespaces, metafield.namespace)
         if metafield.namespace.start_with?("app--")
           _, app_id, app_ns = metafield.namespace.split("--")
           metafield.schema_namespace = []

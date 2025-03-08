@@ -10,11 +10,15 @@ class App
   def initialize
     @graphiql = File.read("#{__dir__}/graphiql.html")
 
-    secrets = JSON.parse(
-      File.exist?("#{__dir__}/secrets.json") ?
-      File.read("#{__dir__}/secrets.json") :
-      File.read("#{__dir__}/../secrets.json")
-    )
+    secrets = begin
+      JSON.parse(
+        File.exist?("#{__dir__}/secrets.json") ?
+        File.read("#{__dir__}/secrets.json") :
+        File.read("#{__dir__}/../secrets.json")
+      )
+    rescue Errno::ENOENT
+      raise "A `secrets.json` file is required, see `example/README.md`"
+    end
 
     @mock_cache = {}
     @client = ShopifyCustomDataGraphQL::Client.new(
@@ -22,7 +26,6 @@ class App
       access_token: secrets["access_token"],
       api_version: "2025-01",
       file_store_path: "#{__dir__}/tmp",
-      app_context_id: 20228407297,
     )
 
     @client.on_cache_read { |k| @mock_cache[k] }
