@@ -3,6 +3,7 @@
 module ShopifyCustomDataGraphQL
   class ResponseTransformer
     EMPTY_HASH = {}.freeze
+    SCOPED_FIELD = /^#{Regexp.quote(RequestTransformer::RESERVED_PREFIX)}([^_]+)_(.+)/.freeze
 
     def initialize(transform_map)
       @transform_map = transform_map
@@ -10,6 +11,7 @@ module ShopifyCustomDataGraphQL
 
     def perform(result)
       result["data"] = transform_object_scope!(result["data"], @transform_map) if result["data"]
+      result["errors"] = transform_errors!(result["errors"]) if result["errors"]
       result
     end
 
@@ -96,6 +98,40 @@ module ShopifyCustomDataGraphQL
       else
         MetafieldTypeResolver.resolve(transform_type, field_value, transform["s"])
       end
+    end
+
+    def transform_errors!(errors)
+      errors.each do |error|
+        error.delete("locations") if @transform_map.any?
+        error["path"] = transform_error_path(error["path"]) if error["path"]
+      end
+    end
+
+    def transform_error_path(path)
+      transformed_path = []
+      path.reduce([0, @transform_map]) do |(index, current_map)|
+        key = path[index]
+        if key.is_a?(String) && key.start_with?(RequestTransformer::RESERVED_PREFIX)
+          m = key.match(SCOPED_FIELD)
+          parent_name = m[1]
+          child_name = m[2]
+          transformed_path.push(parent_name, child_name)
+          next_map = current_map.dig("f", parent_name, "f", child_name)
+          return transformed_path unless next_map
+
+          if (next_transform = next_map.dig("fx", "t"))
+            next [index + 2, next_map] if MetafieldTypeResolver.reference?(next_transform)
+          end
+          [index + 1, next_map]
+        else
+          next_map = key.is_a?(String) ? current_map.dig("f", key) : current_map
+          return path unless next_map
+
+          transformed_path << key
+          [index + 1, next_map]
+        end
+      end
+      transformed_path
     end
   end
 end

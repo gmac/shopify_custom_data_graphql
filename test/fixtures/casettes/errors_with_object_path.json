@@ -1,0 +1,33 @@
+{
+  "errors": [
+    {
+      "message": "Access denied for createdByStaff field.",
+      "locations": [
+        {
+          "line": 8,
+          "column": 11
+        }
+      ],
+      "path": [
+        "product",
+        "___extensions_widget",
+        "reference",
+        "___system_createdByStaff"
+      ],
+      "extensions": {
+        "code": "ACCESS_DENIED"
+      }
+    }
+  ],
+  "data": {
+    "product": {
+      "extensions": {
+        "widget": {
+          "system": {
+            "createdByStaff": null
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "data": {
+    "product": {
+      "id": "gid://shopify/Product/6885875646486",
+      "___extensions_fileReferenceList": {
+        "references": {
+          "nodes": [
+            {
+              "id": "gid://shopify/MediaImage/20354823356438",
+              "alt": "A scenic landscape"
+            }
+          ]
+        }
+      },
+      "___extensions_productReferenceList": {
+        "references": {
+          "edges": [
+            {
+              "node": {
+                "id": "gid://shopify/Product/6561850556438",
+                "title": "Aquanauts Crystal Explorer Sub"
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+}
