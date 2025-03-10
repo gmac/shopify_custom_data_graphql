@@ -43,22 +43,23 @@ module ShopifyCustomDataGraphQL
       api_version: "2025-01",
       app_context_id: nil,
       base_namespaces: nil,
-      scoped_namespaces: nil,
+      prefixed_namespaces: nil,
       file_store_path: nil,
+      lru_max_bytesize: 5.megabytes,
       digest_class: Digest::MD5
     )
       @app_context_id = app_context_id
       @base_namespaces = base_namespaces
-      @scoped_namespaces = scoped_namespaces
+      @prefixed_namespaces = prefixed_namespaces
       @file_store_path = Pathname.new(file_store_path) if file_store_path
       @digest_class = digest_class
 
       if app_context_id
         @base_namespaces ||= ["$app"]
-        @scoped_namespaces ||= ["custom", "my_fields", "app--*"]
+        @prefixed_namespaces ||= ["custom", "my_fields", "app--*"]
       else
         @base_namespaces ||= ["custom"]
-        @scoped_namespaces ||= ["my_fields", "app--*"]
+        @prefixed_namespaces ||= ["my_fields", "app--*"]
       end
 
       @admin = AdminApiClient.new(
@@ -67,7 +68,7 @@ module ShopifyCustomDataGraphQL
         api_version: api_version,
       )
 
-      @lru = LruCache.new(5.megabytes)
+      @lru = LruCache.new(lru_max_bytesize) if lru_max_bytesize > 0
       @on_cache_read = nil
       @on_cache_write = nil
     end
@@ -89,7 +90,7 @@ module ShopifyCustomDataGraphQL
             @admin,
             app_id: @app_context_id,
             base_namespaces: @base_namespaces,
-            scoped_namespaces: @scoped_namespaces,
+            prefixed_namespaces: @prefixed_namespaces,
           )
 
           SchemaComposer.new(admin_schema, catalog).perform
@@ -101,17 +102,14 @@ module ShopifyCustomDataGraphQL
     end
 
     def execute(query: nil, variables: nil, operation_name: nil)
-      exe_start = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-      req_time = 0
-      result = prepare_query(query, operation_name) do |admin_query|
-        req_start = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-        response = @admin.fetch(admin_query, variables: variables)
-        req_time = (Process.clock_gettime(Process::CLOCK_MONOTONIC) - req_start) * 1000
-        response
+      tracer = Tracer.new
+      result = tracer.span("execute") do
+        prepare_query(query, operation_name, tracer) do |admin_query|
+          @admin.fetch(admin_query, variables: variables)
+        end
       end
-      exe_time = (Process.clock_gettime(Process::CLOCK_MONOTONIC) - exe_start) * 1000
-      puts "request: #{req_time}ms, processing: #{exe_time - req_time}ms"
 
+      puts tracer.as_json
       result
     rescue ValidationError => e
       { "errors" => e.errors }
@@ -129,27 +127,35 @@ module ShopifyCustomDataGraphQL
 
     private
 
-    def prepare_query(query, operation_name, &block)
-      digest = @digest_class.hexdigest([query, operation_name, VERSION].join(" "))
-      hot_query = @lru.get(digest)
-      return hot_query.perform(&block) if hot_query
+    def prepare_query(query_str, operation_name, tracer, &block)
+      digest = @digest_class.hexdigest([query_str, operation_name, VERSION].join(" "))
+      if @lru && (hot_query = @lru.get(digest))
+        return hot_query.perform(tracer, source_query: query_str, &block)
+      end
 
       if @on_cache_read && (json = @on_cache_read.call(digest))
         prepared_query = PreparedQuery.new(JSON.parse(json))
-        return @lru.set(digest, prepared_query, json.bytesize)
+        @lru.set(digest, prepared_query, json.bytesize) if @lru
+        return prepared_query.perform(tracer, source_query: query_str, &block)
       end
 
-      query = GraphQL::Query.new(schema, query: query, operation_name: operation_name)
-      errors = schema.static_validator.validate(query)[:errors]
+      query = tracer.span("parse") do
+        GraphQL::Query.new(schema, query: query_str, operation_name: operation_name)
+      end
+      errors = tracer.span("validate") do
+        schema.static_validator.validate(query)[:errors]
+      end
       raise ValidationError.new(errors: errors.map(&:to_h)) if errors.any?
 
       return query.result.to_h if introspection_query?(query)
 
-      prepared_query = RequestTransformer.new(query).perform.to_prepared_query
+      prepared_query = tracer.span("request_transform") do
+        RequestTransformer.new(query).perform.to_prepared_query
+      end
       json = prepared_query.to_json
       @on_cache_write.call(digest, json) if @on_cache_write
-      @lru.set(digest, prepared_query, json.bytesize)
-      prepared_query.perform(&block)
+      @lru.set(digest, prepared_query, json.bytesize) if @lru
+      prepared_query.perform(tracer, source_query: query_str, &block)
     end
 
     def introspection_query?(query)

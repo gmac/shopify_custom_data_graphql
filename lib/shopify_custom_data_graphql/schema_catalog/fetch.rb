@@ -86,7 +86,7 @@ module ShopifyCustomDataGraphQL
         client,
         app_id: nil,
         base_namespaces: ["custom"],
-        scoped_namespaces: ["my_fields"],
+        prefixed_namespaces: ["my_fields"],
         owner_types: OWNER_ENUMS
       )
         result = client.fetch(PROBE_SCHEMA_CONTENT_QUERY)
@@ -95,7 +95,7 @@ module ShopifyCustomDataGraphQL
         catalog = new(
           app_id: app_id,
           base_namespaces: base_namespaces,
-          scoped_namespaces: scoped_namespaces,
+          prefixed_namespaces: prefixed_namespaces,
         )
 
         owner_types.each do |owner_type|

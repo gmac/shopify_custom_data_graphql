@@ -1,5 +1,7 @@
 ## How it works
 
+The client works by composing a superset of the Shopify Admin GraphQL API schema with a Shop or App's custom data modeling inserted. 
+
 ### 1. Compose a reference schema
 
 A reference schema never _executes_ a request, it simply provides introspection and validation capabilities. This schema is built by loading all metafield and metaobject definitions from the Admin API (see [sample query](./example/server.rb)), then inserting those metaobjects and metafields as native types and fields into a base version of the Shopify Admin API (see [`SchemaComposer`](./lib/schema_composer.rb)). This creates static definitions for custom elements with naming carefully scoped to avoid conflicts with the base Admin schema, for example:
