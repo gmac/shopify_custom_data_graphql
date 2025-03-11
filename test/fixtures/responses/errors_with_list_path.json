@@ -21,19 +21,5 @@
       }
     }
   ],
-  "data": {
-    "products": {
-      "nodes": [
-        {
-          "extensions": {
-            "widget": {
-              "system": {
-                "createdByStaff": null
-              }
-            }
-          }
-        }
-      ]
-    }
-  }
+  "data": null
 }

@@ -1,0 +1,13 @@
+{
+  "data": {
+    "product": {
+      "extensions": "Product",
+      "___extensions_widget": {
+        "reference": {
+          "__typename": "widget",
+          "__typename__": "Metaobject"
+        }
+      }
+    }
+  }
+}

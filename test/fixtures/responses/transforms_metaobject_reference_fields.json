@@ -1,0 +1,26 @@
+{
+  "data": {
+    "product": {
+      "extensions": "Product",
+      "___extensions_widget": {
+        "reference": {
+          "fileReference": {
+            "reference": {
+              "id": "gid://shopify/File/1",
+              "alt": "A Thousand Dreams Encapsulated",
+              "__typename__": "MediaImage"
+            }
+          },
+          "productReference": {
+            "reference": {
+              "id": "gid://shopify/Product/2",
+              "title": "Whispering Willows Light",
+              "__typename__": "Product"
+            }
+          },
+          "__typename__": "Metaobject"
+        }
+      }
+    }
+  }
+}
