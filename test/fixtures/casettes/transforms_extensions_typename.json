@@ -1,0 +1,9 @@
+{
+  "data": {
+    "product": {
+      "__typename": "Product",
+      "extensions": "Product",
+      "___extensions___typename": "Product"
+    }
+  }
+}

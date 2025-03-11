@@ -7,8 +7,8 @@ Gem::Specification.new do |spec|
   spec.name          = "shopify_custom_data_graphql"
   spec.version       = ShopifyCustomDataGraphQL::VERSION
   spec.authors       = ["Greg MacWilliam"]
-  spec.summary       = "A client for consuming Shopify metafields and metaobjects through schema projections."
-  spec.description   = "Build a shop-specific GraphQL schema and use it to make requests."
+  spec.summary       = "A statically-typed GraphQL API for Shopify Metafields and Metaobjects."
+  spec.description   = "A statically-typed GraphQL API for Shopify Metafields and Metaobjects."
   spec.homepage      = "https://github.com/gmac/shopify_custom_data_graphql"
   spec.license       = "MIT"
 

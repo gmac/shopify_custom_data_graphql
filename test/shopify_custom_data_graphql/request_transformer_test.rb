@@ -1181,7 +1181,7 @@ describe "RequestTransformer" do
     )
 
     errors = query.schema.static_validator.validate(query)[:errors]
-    refute errors.any?, "Invalid metafields query: #{errors.first.message}" if errors.any?
+    refute errors.any?, "Invalid custom data query: #{errors.first.message}" if errors.any?
     result = ShopifyCustomDataGraphQL::RequestTransformer.new(query).perform
 
     # validate transformed query against base admin schema
