@@ -12,7 +12,8 @@
             "jsonValue": 75
           },
           "__typename": "taco",
-          "___typehint": "taco"
+          "___typehint": "taco",
+          "__typename__": "Metaobject"
         }
       }
     }

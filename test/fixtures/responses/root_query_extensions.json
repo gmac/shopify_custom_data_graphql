@@ -1,0 +1,22 @@
+{
+  "data": {
+    "extensions": "QueryRoot",
+    "___extensions_widgetMetaobjects": {
+      "nodes": [
+        {
+          "id": "gid://shopify/Metaobject/1",
+          "boolean":{
+            "jsonValue": true
+          },
+          "rating": {
+            "jsonValue": {
+              "scale_min": "1.0",
+              "scale_max": "5.0",
+              "value": "5.0"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

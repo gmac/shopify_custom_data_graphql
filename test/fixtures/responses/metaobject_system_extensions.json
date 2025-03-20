@@ -1,0 +1,21 @@
+{
+  "data": {
+    "extensions": "QueryRoot",
+    "___extensions_widgetMetaobjects": {
+      "nodes": [
+        {
+          "id": "gid://shopify/Metaobject/1",
+          "handle": "gourmet-gadgetry",
+          "system": "Metaobject",
+          "___system_createdByStaff": { 
+            "id": "gid://shopify/User/1"
+          },
+          "___system_updatedAt": "2025-03-20T02:00:00Z",
+          "boolean": {
+            "jsonValue": true
+          }
+        }
+      ]
+    }
+  }
+}

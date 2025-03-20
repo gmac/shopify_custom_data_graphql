@@ -1,0 +1,17 @@
+{
+  "data": {
+    "product": {
+      "extensions": "Product",
+      "___extensions_widget": {
+        "reference": {
+          "id": "gid://shopify/Metaobject/1",
+          "handle": "celestial-harmony",
+          "boolean": {
+            "jsonValue": false
+          },
+          "__typename__": "Metaobject"
+        }
+      }
+    }
+  }
+}

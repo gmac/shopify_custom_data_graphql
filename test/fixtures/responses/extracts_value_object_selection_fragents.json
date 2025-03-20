@@ -1,0 +1,21 @@
+{
+  "data": {
+    "product": {
+      "extensions": "Product",
+      "___extensions_rating1": {
+        "jsonValue": {
+          "value": 4.5,
+          "scale_max": 5,
+          "scale_min": 0
+        }
+      },
+      "___extensions_rating2": {
+        "jsonValue": {
+          "value": 4.5,
+          "scale_max": 5,
+          "scale_min": 0
+        }
+      }
+    }
+  }
+}

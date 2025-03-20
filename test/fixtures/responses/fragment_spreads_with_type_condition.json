@@ -1,0 +1,14 @@
+{
+  "data": {
+    "node": {
+      "id": "gid://shopify/Product/1",
+      "title": "Ethereal Dreams T-Shirt",
+      "productExt": "Product",
+      "___productExt_boolean": {
+        "jsonValue": true
+      },
+      "___typehint": "Product",
+      "__typename__": "Product"
+    }
+  }
+}

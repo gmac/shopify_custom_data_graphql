@@ -2,6 +2,7 @@
   "data": {
     "product": {
       "id": "gid://shopify/Product/6885875646486",
+      "extensions": "Product",
       "___extensions_boolean": {
         "jsonValue": true
       },

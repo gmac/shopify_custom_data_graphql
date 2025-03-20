@@ -2,16 +2,19 @@
   "data": {
     "product": {
       "id": "gid://shopify/Product/6885875646486",
+      "extensions": "Product",
       "___extensions_fileReference": {
         "reference": {
           "id": "gid://shopify/MediaImage/20354823356438",
-          "alt": ""
+          "alt": "Echoes of Twilight Silence",
+          "__typename__": "MediaImage"
         }
       },
       "___extensions_productReference": {
         "reference": {
           "id": "gid://shopify/Product/6561850556438",
-          "title": "Aquanauts Crystal Explorer Sub"
+          "title": "Aquanauts Crystal Explorer Sub",
+          "__typename__": "Product"
         }
       }
     }

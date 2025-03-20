@@ -1,0 +1,48 @@
+{
+  "data": {
+    "product": {
+      "extensions": "Product",
+      "___extensions_widget": {
+        "reference": {
+          "fileReferenceList": {
+            "references": {
+              "nodes": [
+                {
+                  "id": "gid://shopify/File/101",
+                  "alt": "Whispers of the Moonlit Sea",
+                  "__typename__": "MediaImage"
+                },
+                {
+                  "id": "gid://shopify/File/102",
+                  "alt": "Ethereal Dance of the Aurora",
+                  "__typename__": "MediaImage"
+                }
+              ]
+            }
+          },
+          "productReferenceList": {
+            "references": {
+              "edges": [
+                {
+                  "node": {
+                    "id": "gid://shopify/Product/201",
+                    "title": "Echoes of Twilight Silence",
+                    "__typename__": "Product"
+                  }
+                },
+                {
+                  "node": {
+                    "id": "gid://shopify/Product/202",
+                    "title": "Serenade of the Night's End",
+                    "__typename__": "Product"
+                  }
+                }
+              ]
+            }
+          },
+          "__typename__": "Metaobject"
+        }
+      }
+    }
+  }
+}

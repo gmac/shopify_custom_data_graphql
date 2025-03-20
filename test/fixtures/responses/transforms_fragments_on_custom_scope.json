@@ -1,0 +1,13 @@
+{
+  "data": {
+    "product": {
+      "extensions": "Product",
+      "___extensions_boolean": {
+        "jsonValue": true
+      },
+      "___extensions_color": {
+        "jsonValue": "#F39C12"
+      }
+    }
+  }
+}

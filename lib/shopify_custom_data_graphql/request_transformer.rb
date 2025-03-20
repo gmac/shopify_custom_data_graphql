@@ -42,7 +42,7 @@ module ShopifyCustomDataGraphQL
       @query = query
       @schema = query.schema
       @app_context = directive_kwargs(@schema.schema_directives, "app")&.dig(:id)
-      @owner_types = @schema.possible_types(@schema.get_type("HasMetafields")).to_set
+      @owner_types = @schema.possible_types(@query.get_type("HasMetafields")).to_set
       @root_ext_name = MetafieldTypeResolver.extensions_typename(@schema.query.graphql_name)
       @transform_map = TransformationMap.new(@app_context)
       @metafield_ns = metafield_ns
@@ -71,13 +71,13 @@ module ShopifyCustomDataGraphQL
             if scope_type == NATIVE_SCOPE && node.name == "extensions" && (parent_type == @schema.query || @owner_types.include?(parent_type))
               @transform_map.apply_field_transform(FieldTransform.new(NAMESPACE_TRANSFORM))
               with_namespace_anchor_field(node) do
-                next_type = parent_type.get_field(node.name).type.unwrap
+                next_type = @query.get_field(parent_type, node.name).type.unwrap
                 transform_scope(next_type, node.selections, scope_type: EXTENSIONS_SCOPE, scope_ns: node.alias || node.name)
               end
             elsif scope_type == METAOBJECT_SCOPE && node.name == "system"
               @transform_map.apply_field_transform(FieldTransform.new(NAMESPACE_TRANSFORM))
               with_namespace_anchor_field(node) do
-                next_type = parent_type.get_field(node.name).type.unwrap
+                next_type = @query.get_field(parent_type, node.name).type.unwrap
                 transform_scope(next_type, node.selections, scope_ns: node.alias || node.name)
               end
             elsif scope_type == EXTENSIONS_SCOPE && parent_type.graphql_name == @root_ext_name
@@ -89,7 +89,7 @@ module ShopifyCustomDataGraphQL
                 node = node.merge(alias: "#{RESERVED_PREFIX}#{scope_ns}_#{node.alias || node.name}")
               end
               if node.selections&.any?
-                next_type = parent_type.get_field(node.name).type.unwrap
+                next_type = @query.get_field(parent_type, node.name).type.unwrap
                 node = node.merge(selections: transform_scope(next_type, node.selections))
               end
               node
@@ -97,7 +97,7 @@ module ShopifyCustomDataGraphQL
           end
 
         when GraphQL::Language::Nodes::InlineFragment
-          fragment_type = node.type.nil? ? parent_type : @schema.get_type(node.type.name)
+          fragment_type = node.type.nil? ? parent_type : @query.get_type(node.type.name)
           with_typed_condition(parent_type, fragment_type, scope_type) do
             if MetafieldTypeResolver.extensions_type?(fragment_type.graphql_name)
               transform_scope(fragment_type, node.selections, scope_type: EXTENSIONS_SCOPE, scope_ns: scope_ns)
@@ -116,7 +116,7 @@ module ShopifyCustomDataGraphQL
 
         when GraphQL::Language::Nodes::FragmentSpread
           fragment_def = @query.fragments[node.name]
-          fragment_type = @schema.get_type(fragment_def.type.name)
+          fragment_type = @query.get_type(fragment_def.type.name)
           with_typed_condition(parent_type, fragment_type, scope_type) do
             unless @new_fragments[node.name]
               fragment_type_name = fragment_type.graphql_name
@@ -175,7 +175,7 @@ module ShopifyCustomDataGraphQL
 
     # connections must map transformations through possible `edges -> node` and `nodes` pathways
     def build_connection_selections(conn_type, conn_node)
-      conn_node_type = conn_type.get_field("nodes").type.unwrap
+      conn_node_type = @query.get_field(conn_type, "nodes").type.unwrap
       conn_node.selections.map do |node|
         @transform_map.field_breadcrumb(node) do
           case node.name
@@ -186,7 +186,7 @@ module ShopifyCustomDataGraphQL
                 when "node"
                   n.merge(selections: yield(conn_node_type, n.selections))
                 when GQL_TYPENAME
-                  edge_type = conn_type.get_field("edges").type.unwrap
+                  edge_type = @query.get_field(conn_type, "edges").type.unwrap
                   @transform_map.apply_field_transform(FieldTransform.new(STATIC_TYPENAME_TRANSFORM, value: edge_type.graphql_name))
                   n
                 else
@@ -210,10 +210,10 @@ module ShopifyCustomDataGraphQL
     def build_metaobject_query(parent_type, node, scope_ns: nil)
       return build_typename(parent_type, node, scope_type: EXTENSIONS_SCOPE, scope_ns: scope_ns) if node.name == GQL_TYPENAME
 
-      field_type = parent_type.get_field(node.name).type.unwrap
+      field_type = @query.get_field(parent_type, node.name).type.unwrap
       return node unless MetafieldTypeResolver.connection_type?(field_type.graphql_name)
 
-      node_type = field_type.get_field("nodes").type.unwrap
+      node_type = @query.get_field(field_type, "nodes").type.unwrap
       metaobject_type = directive_kwargs(node_type.directives, "metaobject")&.dig(:type)
       return node unless metaobject_type
 
@@ -232,7 +232,7 @@ module ShopifyCustomDataGraphQL
     def build_metafield(parent_type, node, scope_type:, scope_ns: nil)
       return build_typename(parent_type, node, scope_type: scope_type, scope_ns: scope_ns) if node.name == GQL_TYPENAME
 
-      field = parent_type.get_field(node.name)
+      field = @query.get_field(parent_type, node.name)
       metafield_attrs = directive_kwargs(field.directives, "metafield")
       return node unless metafield_attrs
 

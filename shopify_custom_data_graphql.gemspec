@@ -32,4 +32,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "bundler", "~> 2.0"
   spec.add_development_dependency "rake", "~> 12.0"
   spec.add_development_dependency "minitest", "~> 5.12"
+  spec.add_development_dependency "graphql-response_validator", "~> 0.0.2"
 end

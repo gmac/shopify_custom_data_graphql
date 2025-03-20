@@ -1,0 +1,19 @@
+{
+  "data": {
+    "product": {
+      "extensions": "Product",
+      "___extensions_widget": {
+        "reference": {
+          "myBoolean": {
+            "jsonValue": true
+          },
+          "myColor": {
+            "jsonValue": "#7A3B6C"
+          },
+          "myTypename": "widget",
+          "__typename__": "Metaobject"
+        }
+      }
+    }
+  }
+}
