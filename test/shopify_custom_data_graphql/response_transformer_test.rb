@@ -793,9 +793,9 @@ describe "ResponseTransformer" do
 
   private
 
-  SCALAR_VALIDATORS = {
+  SCALAR_VALIDATORS = GraphQL::ResponseValidator::SCALAR_VALIDATORS.merge({
     "JSON" => -> (value) { true }
-  }.freeze
+  }).freeze
 
   def fetch(fixture, document, variables: {}, operation_name: nil, schema: nil, expect_valid_response: true)
     query = GraphQL::Query.new(

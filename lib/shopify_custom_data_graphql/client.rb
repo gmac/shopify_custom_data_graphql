@@ -93,7 +93,7 @@ module ShopifyCustomDataGraphQL
             prefixed_namespaces: @prefixed_namespaces,
           )
 
-          SchemaComposer.new(admin_schema, catalog).perform
+          SchemaComposer.new(admin_schema, catalog).schema
         end
 
         custom_schema = GraphQL::Schema.from_definition(custom_schema) if custom_schema.is_a?(String)
