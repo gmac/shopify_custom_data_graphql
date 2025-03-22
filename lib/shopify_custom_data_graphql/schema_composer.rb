@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "schema_composer/extensions_document_from_schema_definition"
+
 module ShopifyCustomDataGraphQL
   class SchemaComposer
     class MetafieldDirective < GraphQL::Schema::Directive
@@ -20,13 +22,14 @@ module ShopifyCustomDataGraphQL
     def initialize(base_schema, catalog)
       @base_schema = base_schema
       @catalog = catalog
-
-      introspection_names = @base_schema.introspection_system.types.keys.to_set
-      @schema_types = @base_schema.types.reject! { |k, v| introspection_names.include?(k) }
+      @schema = nil
+      @schema_types = @base_schema.types.reject { |k, v| v.introspection? }
       @metaobject_unions = {}
     end
 
-    def perform
+    def schema
+      return @schema unless @schema.nil?
+
       query_name = @base_schema.query.graphql_name
       mutation_name = @base_schema.mutation.graphql_name
 
@@ -50,7 +53,7 @@ module ShopifyCustomDataGraphQL
       end
 
       builder = self
-      schema = Class.new(GraphQL::Schema) do
+      built_schema = Class.new(GraphQL::Schema) do
         use(GraphQL::Schema::Visibility)
         directive(MetafieldDirective)
         directive(MetaobjectDirective)
@@ -69,11 +72,16 @@ module ShopifyCustomDataGraphQL
           argument :id, builder.schema_types["ID"], required: true
         end
 
-        schema.directive(app_directive)
-        schema.schema_directive(app_directive, id: @catalog.app_id)
+        built_schema.directive(app_directive)
+        built_schema.schema_directive(app_directive, id: @catalog.app_id)
       end
 
-      schema
+      @schema = built_schema
+    end
+
+    def to_extensions_definition
+      document = ExtensionsDocumentFromSchemaDefinition.new(schema, @base_schema).document
+      GraphQL::Language::Printer.new.print(document)
     end
 
     def type_for_metafield_definition(field_def)
