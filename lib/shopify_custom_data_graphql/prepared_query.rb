@@ -3,6 +3,7 @@
 module ShopifyCustomDataGraphQL
   class PreparedQuery
     DEFAULT_TRACER = Tracer.new
+    EMPTY_HASH= {}
 
     class Result
       attr_reader :query, :tracer, :result
@@ -22,14 +23,12 @@ module ShopifyCustomDataGraphQL
 
     def initialize(params)
       @query = params["query"]
-      @transforms = params["transforms"]
-
-      unless @query && @transforms
-        raise ArgumentError, "PreparedQuery requires params `query` and `transforms`"
-      end
+      @transforms = params["transforms"] || EMPTY_HASH
     end
 
     def as_json
+      return EMPTY_HASH if base_query?
+
       {
         "query" => @query,
         "transforms" => @transforms,
@@ -41,7 +40,9 @@ module ShopifyCustomDataGraphQL
     end
 
     def perform(tracer = DEFAULT_TRACER, source_query: nil)
-      query = source_query && @transforms.none? ? source_query : @query
+      query = source_query && base_query? ? source_query : @query
+      raise ArgumentError, "A source_query is required with empty transformations" if query.nil?
+
       raw_result = tracer.span("proxy") { yield(query) }
 
       result = if @transforms.any?
@@ -53,6 +54,12 @@ module ShopifyCustomDataGraphQL
       end
 
       Result.new(query: query, tracer: tracer, result: result)
+    end
+
+    private
+
+    def base_query?
+      @transforms.none?
     end
   end
 end

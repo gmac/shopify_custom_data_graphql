@@ -3,6 +3,20 @@
 require "test_helper"
 
 describe "RequestTransformer" do
+  def test_requests_with_no_custom_data_have_no_transforms
+    expected_query = %|query {
+      product(id: "1") {
+        title
+      }
+    }|
+
+    expected_transforms = {}
+    result = transform_request(expected_query)
+
+    assert_equal expected_query.squish, result.query.squish
+    assert_equal expected_transforms, result.transforms
+  end
+
   def test_transforms_extensions_scalar_fields
     result = transform_request(%|query {
       product(id: "1") {
