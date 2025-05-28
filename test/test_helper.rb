@@ -30,13 +30,10 @@ def load_shop_fixtures_catalog(app_id: nil)
 end
 
 def load_shop_fixtures_schema(app_id: nil)
-  schema = ShopifyCustomDataGraphQL::SchemaComposer.new(
+  ShopifyCustomDataGraphQL::SchemaComposer.new(
     load_base_admin_schema,
     load_shop_fixtures_catalog(app_id: app_id),
-  ).perform
-
-  # File.write("#{__dir__}/fixtures/admin_2025_01_#{app_id ? "app#{app_id}" : "shop"}.graphql", schema.to_definition)
-  schema
+  ).schema
 end
 
 $base_schema = nil
