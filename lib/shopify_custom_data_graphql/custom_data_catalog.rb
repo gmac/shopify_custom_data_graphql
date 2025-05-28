@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-require_relative "schema_catalog/metafield_definition"
-require_relative "schema_catalog/metaobject_definition"
-require_relative "schema_catalog/metaobject_union"
-require_relative "schema_catalog/fetch"
+require_relative "custom_data_catalog/metafield_definition"
+require_relative "custom_data_catalog/metaobject_definition"
+require_relative "custom_data_catalog/metaobject_union"
+require_relative "custom_data_catalog/fetch"
 
 module ShopifyCustomDataGraphQL
   class CustomDataCatalog
