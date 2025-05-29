@@ -16,16 +16,7 @@ module ShopifyCustomDataGraphQL
       }
     |
 
-    MetafieldDefinition = Struct.new(
-      :key,
-      :type,
-      :namespace,
-      :description,
-      :validations,
-      :owner_type,
-      :schema_namespace,
-      keyword_init: true
-    ) do
+    class MetafieldDefinition
       class << self
         def from_graphql(metafield_def)
           new(
@@ -39,8 +30,21 @@ module ShopifyCustomDataGraphQL
         end
       end
 
+      attr_reader :key, :type, :namespace, :description, :validations, :owner_type
+      attr_accessor :schema_namespace
+
+      def initialize(key:, type:, namespace:, description:, validations:, owner_type:)
+        @key = key
+        @type = type
+        @namespace = namespace
+        @description = description
+        @validations = validations
+        # need to handle irregulars...
+        @owner_type = owner_type&.underscore&.upcase || "METAOBJECT"
+      end
+
       def reference_key
-        @reference_key ||= [namespace, key].tap(&:compact!).join(".")
+        @reference_key ||= owner_type == "METAOBJECT" ? key : [namespace, key].tap(&:compact!).join(".")
       end
 
       def schema_key
