@@ -34,7 +34,7 @@ module ShopifyCustomDataGraphQL
       end
 
       def to_prepared_query
-        PreparedQuery.new({ "query" => query, "transforms" => transforms })
+        PreparedQuery.new({ "query" => query, "transforms" => transforms }, document: @document)
       end
     end
 

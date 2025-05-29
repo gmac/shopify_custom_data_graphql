@@ -21,9 +21,10 @@ module ShopifyCustomDataGraphQL
 
     attr_reader :query, :transforms
 
-    def initialize(params)
+    def initialize(params, document: nil)
       @query = params["query"]
       @transforms = params["transforms"] || EMPTY_HASH
+      @document = document
     end
 
     def as_json
@@ -43,7 +44,7 @@ module ShopifyCustomDataGraphQL
       query = source_query && base_query? ? source_query : @query
       raise ArgumentError, "A source_query is required with empty transformations" if query.nil?
 
-      raw_result = tracer.span("proxy") { yield(query) }
+      raw_result = tracer.span("proxy") { yield(query, @document) }
 
       result = if @transforms.any?
         tracer.span("transform_response") do
