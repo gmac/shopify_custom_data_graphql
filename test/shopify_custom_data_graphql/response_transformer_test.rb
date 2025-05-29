@@ -807,8 +807,8 @@ describe "ResponseTransformer" do
 
     errors = query.schema.static_validator.validate(query)[:errors]
     refute errors.any?, "Invalid custom data query: #{errors.first.message}" if errors.any?
-    shop_query = ShopifyCustomDataGraphQL::RequestTransformer.new(query).perform.to_prepared_query
-    shop_query.perform do |query_string|
+    prepared_query = ShopifyCustomDataGraphQL::RequestTransformer.new(query).perform
+    prepared_query.perform do |query_string|
       file_path = "#{__dir__}/../fixtures/responses/#{fixture}.json"
       response = JSON.parse(File.read(file_path))
 

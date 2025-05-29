@@ -131,13 +131,13 @@ module ShopifyCustomDataGraphQL
     def perform_query(query_str, operation_name, tracer, &block)
       digest = @digest_class.hexdigest([query_str, operation_name, VERSION].join(" "))
       if @lru && (hot_query = @lru.get(digest))
-        return hot_query.perform(tracer, source_query: query_str, &block)
+        return hot_query.perform(tracer, &block)
       end
 
       if @on_cache_read && (json = @on_cache_read.call(digest))
-        prepared_query = PreparedQuery.new(JSON.parse(json))
-        @lru.set(digest, prepared_query, json.bytesize) if @lru
-        return prepared_query.perform(tracer, source_query: query_str, &block)
+        prepared_query = PreparedQuery.new(**JSON.parse(json))
+        @lru.set(digest, prepared_query, json.bytesize) if @lru && prepared_query.transformed?
+        return prepared_query.perform(tracer, &block)
       end
 
       query = tracer.span("parse") do
@@ -154,12 +154,12 @@ module ShopifyCustomDataGraphQL
       end
 
       prepared_query = tracer.span("transform_request") do
-        RequestTransformer.new(query).perform.to_prepared_query
+        RequestTransformer.new(query).perform
       end
       json = prepared_query.to_json
       @on_cache_write.call(digest, json) if @on_cache_write
-      @lru.set(digest, prepared_query, json.bytesize) if @lru
-      prepared_query.perform(tracer, source_query: query_str, &block)
+      @lru.set(digest, prepared_query, json.bytesize) if @lru && prepared_query.transformed?
+      prepared_query.perform(tracer, &block)
     end
 
     def introspection_query?(query)

@@ -16,28 +16,6 @@ module ShopifyCustomDataGraphQL
     METAOBJECT_SCOPE = :metaobject
     NATIVE_SCOPE = :native
 
-    class Result
-      attr_reader :document, :transform_map
-
-      def initialize(document, transform_map)
-        @document = document
-        @transform_map = transform_map
-        @query = @transforms = nil
-      end
-
-      def query
-        @query ||= GraphQL::Language::Printer.new.print(@document)
-      end
-
-      def transforms
-        @transforms ||= @transform_map.as_json
-      end
-
-      def to_prepared_query
-        PreparedQuery.new({ "query" => query, "transforms" => transforms }, document: @document)
-      end
-    end
-
     def initialize(query, metafield_ns = "custom")
       @query = query
       @schema = query.schema
@@ -54,7 +32,12 @@ module ShopifyCustomDataGraphQL
       parent_type = @query.root_type_for_operation(op.operation_type)
       op = op.merge(selections: transform_scope(parent_type, op.selections))
       document = GraphQL::Language::Nodes::Document.new(definitions: [op, *@new_fragments.values])
-      Result.new(document, @transform_map)
+      transforms = @transform_map.as_json
+      PreparedQuery.new(
+        query: transforms.empty? ? @query.query_string : nil,
+        document: transforms.empty? ? @query.document : document,
+        transforms: transforms,
+      )
     end
 
     private
