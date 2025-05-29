@@ -2,8 +2,11 @@
 
 module ShopifyCustomDataGraphQL
   class PreparedQuery
+    GRAPHQL_PRINTER = GraphQL::Language::Printer.new
     DEFAULT_TRACER = Tracer.new
-    EMPTY_HASH= {}
+    EMPTY_HASH = {}.freeze
+
+    class NoQueryError < StandardError; end
 
     class Result
       attr_reader :query, :tracer, :result
@@ -19,20 +22,32 @@ module ShopifyCustomDataGraphQL
       end
     end
 
-    attr_reader :query, :transforms
+    attr_reader :transforms
 
-    def initialize(params, document: nil)
-      @query = params["query"]
-      @transforms = params["transforms"] || EMPTY_HASH
+    def initialize(query: nil, document: nil, transforms: nil)
+      @query = query
       @document = document
+      @transforms = transforms || EMPTY_HASH
+    end
+
+    def query
+      @query ||= @document ? GRAPHQL_PRINTER.print(@document) : nil
+    end
+
+    def document
+      @document ||= @query ? GraphQL.parse(@query) : nil
+    end
+
+    def transformed?
+      @transforms.any?
     end
 
     def as_json
-      return EMPTY_HASH if base_query?
+      return EMPTY_HASH unless transformed?
 
       {
-        "query" => @query,
-        "transforms" => @transforms,
+        "query" => query,
+        "transforms" => transforms,
       }
     end
 
@@ -40,13 +55,12 @@ module ShopifyCustomDataGraphQL
       as_json.to_json
     end
 
-    def perform(tracer = DEFAULT_TRACER, source_query: nil)
-      query = source_query && base_query? ? source_query : @query
-      raise ArgumentError, "A source_query is required with empty transformations" if query.nil?
+    def perform(tracer = DEFAULT_TRACER)
+      raise NoQueryError, "No query to execute" if query.nil?
 
       raw_result = tracer.span("proxy") { yield(query, @document) }
 
-      result = if @transforms.any?
+      result = if transformed?
         tracer.span("transform_response") do
           ResponseTransformer.new(@transforms).perform(raw_result)
         end
@@ -55,12 +69,6 @@ module ShopifyCustomDataGraphQL
       end
 
       Result.new(query: query, tracer: tracer, result: result)
-    end
-
-    private
-
-    def base_query?
-      @transforms.none?
     end
   end
 end
