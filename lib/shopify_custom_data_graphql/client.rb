@@ -37,6 +37,8 @@ module ShopifyCustomDataGraphQL
       end
     end
 
+    attr_reader :lru
+
     def initialize(
       shop_url:,
       access_token:,
@@ -104,8 +106,8 @@ module ShopifyCustomDataGraphQL
     def execute(query: nil, variables: nil, operation_name: nil)
       tracer = Tracer.new
       tracer.span("execute") do
-        perform_query(query, operation_name, tracer) do |admin_query|
-          @admin.fetch(admin_query, variables: variables)
+        perform_query(query, operation_name, tracer) do |prepared_query|
+          @admin.fetch(prepared_query.query, variables: variables)
         end
       end
     rescue ValidationError => e

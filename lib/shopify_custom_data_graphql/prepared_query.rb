@@ -58,7 +58,7 @@ module ShopifyCustomDataGraphQL
     def perform(tracer = DEFAULT_TRACER)
       raise NoQueryError, "No query to execute" if query.nil?
 
-      raw_result = tracer.span("proxy") { yield(query, @document) }
+      raw_result = tracer.span("proxy") { yield(self) }
 
       result = if transformed?
         tracer.span("transform_response") do

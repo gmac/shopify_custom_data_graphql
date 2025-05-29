@@ -808,15 +808,15 @@ describe "ResponseTransformer" do
     errors = query.schema.static_validator.validate(query)[:errors]
     refute errors.any?, "Invalid custom data query: #{errors.first.message}" if errors.any?
     prepared_query = ShopifyCustomDataGraphQL::RequestTransformer.new(query).perform
-    prepared_query.perform do |query_string|
+    prepared_query.perform do |pq|
       file_path = "#{__dir__}/../fixtures/responses/#{fixture}.json"
       response = JSON.parse(File.read(file_path))
 
       if expect_valid_response
         # validate that the cached fixture matches the request shape
-        admin_query = GraphQL::Query.new(base_schema, query: query_string)
+        admin_query = GraphQL::Query.new(base_schema, query: pq.query)
         fixture = GraphQL::ResponseValidator.new(admin_query, response, scalar_validators: SCALAR_VALIDATORS)
-        assert fixture.valid?, "#{fixture.errors.map(&:message).join("\n")} in:\n#{query_string}"
+        assert fixture.valid?, "#{fixture.errors.map(&:message).join("\n")} in:\n#{pq.query}"
         fixture.prune!.to_h
       else
         response
