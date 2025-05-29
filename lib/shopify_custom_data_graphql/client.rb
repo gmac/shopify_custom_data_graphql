@@ -37,7 +37,7 @@ module ShopifyCustomDataGraphQL
       end
     end
 
-    attr_reader :lru
+    attr_reader :lru, :admin
 
     def initialize(
       shop_url:,
