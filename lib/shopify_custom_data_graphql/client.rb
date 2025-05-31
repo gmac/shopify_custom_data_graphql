@@ -145,15 +145,21 @@ module ShopifyCustomDataGraphQL
       query = tracer.span("parse") do
         GraphQL::Query.new(schema, query: query_str, operation_name: operation_name)
       end
+
       errors = tracer.span("validate") do
         schema.static_validator.validate(query)[:errors]
       end
-      raise ValidationError.new(errors: errors.map(&:to_h)) if errors.any?
 
-      if introspection_query?(query)
-        result = tracer.span("introspection") { query.result.to_h }
-        return PreparedQuery::Result.new(query: query_str, tracer: tracer, result: result)
+      ShopifyCustomDataGraphQL.handle_introspection(query) do |introspection_errors|
+        if introspection_errors
+          errors.concat(introspection_errors)
+        else
+          result = tracer.span("introspection") { query.result.to_h }
+          return PreparedQuery::Result.new(query: query_str, tracer: tracer, result: result)
+        end
       end
+
+      raise ValidationError.new(errors: errors.map(&:to_h)) if errors.any?
 
       prepared_query = tracer.span("transform_request") do
         RequestTransformer.new(query).perform
@@ -162,34 +168,6 @@ module ShopifyCustomDataGraphQL
       @on_cache_write.call(digest, json) if @on_cache_write
       @lru.set(digest, prepared_query, json.bytesize) if @lru && prepared_query.transformed?
       prepared_query.perform(tracer, &block)
-    end
-
-    def introspection_query?(query)
-      return false unless query.query?
-
-      root_field_names = collect_root_field_names(query, query.selected_operation.selections)
-      return false if root_field_names.none? { INTROSPECTION_FIELDS.include?(_1) }
-
-      # hard limitation... data and introspections resolve from different places
-      unless root_field_names.all? { INTROSPECTION_FIELDS.include?(_1) }
-        raise ValidationError, "Custom data schemas cannot combine data fields with introspection fields."
-      end
-
-      true
-    end
-
-    def collect_root_field_names(query, selections, names = [])
-      selections.each do |node|
-        case node
-        when GraphQL::Language::Nodes::Field
-          names << node.name
-        when GraphQL::Language::Nodes::InlineFragment
-          collect_root_field_names(query, node.selections, names)
-        when GraphQL::Language::Nodes::FragmentSpread
-          collect_root_field_names(query, query.fragments[node.name].selections, names)
-        end
-      end
-      names
     end
 
     def schema_file_name(handle, app_context_id = nil)

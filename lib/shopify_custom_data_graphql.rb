@@ -24,6 +24,46 @@ module ShopifyCustomDataGraphQL
       result
     end
   end
+
+  class << self
+    def handle_introspection(query)
+      return unless query.query?
+
+      introspection_nodes = map_root_introspection_nodes(query, query.schema.query, query.selected_operation.selections)
+      return if introspection_nodes.all? { _1.nil? || _1.name == "__typename" }
+
+      errors = if introspection_nodes.any?(&:nil?)
+        introspection_nodes.reject! { _1.nil? || _1.name == "__typename" }
+        [
+          GraphQL::StaticValidation::Error.new(
+            "Cannot combine root fields with introspection fields.",
+            nodes: introspection_nodes,
+          ),
+        ]
+      end
+
+      yield(errors)
+      nil
+    end
+
+    private
+
+    def map_root_introspection_nodes(query, parent_type, selections, nodes: [])
+      selections.each do |node|
+        case node
+        when GraphQL::Language::Nodes::Field
+          field = query.get_field(parent_type, node.name)
+          nodes << (field&.introspection? ? node : nil)
+        when GraphQL::Language::Nodes::InlineFragment
+          map_root_introspection_nodes(query, parent_type, node.selections, nodes: nodes)
+        when GraphQL::Language::Nodes::FragmentSpread
+          fragment_selections = query.fragments[node.name].selections
+          map_root_introspection_nodes(query, parent_type, fragment_selections, nodes: nodes)
+        end
+      end
+      nodes
+    end
+  end
 end
 
 require_relative "shopify_custom_data_graphql/metafield_type_resolver"
