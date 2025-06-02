@@ -55,6 +55,13 @@ Try the [example server](./example/README.md), and [learn how it works](./docs/m
 
 TL;DR – the client composes a superset of the Shopify Admin API schema with a Shop or App's custom data modeling inserted. All normal Admin API queries work with additional access to custom data extensions. This workflow provides introspection (for live documentation), request validation, and transforms custom data queries into native Admin API requests. With layers of caching, these custom data queries can be performed very efficiently with little overhead.
 
+## Features
+
+* All `HasMetafields` owner types get a new `extensions` scope to make metafield selections through using the natural metafield key name.
+* All metaobject types are represented in schema as a `<Thing>Metaobject`, and provide their fields as modeled data.
+* Metaobject types provide their `id` and `handle` (which are reserved names), and provide a `system` scope to access the primitive metaobject.
+* All metaobject types provide a root pagination for metaobjects of that specific type.
+
 ## Getting started
 
 Add to your Gemfile:
